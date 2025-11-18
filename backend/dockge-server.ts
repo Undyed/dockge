@@ -30,13 +30,13 @@ import { Stack } from "./stack";
 import { Cron } from "croner";
 import gracefulShutdown from "http-graceful-shutdown";
 import User from "./models/user";
-import childProcessAsync from "promisify-child-process";
 import { AgentManager } from "./agent-manager";
 import { AgentProxySocketHandler } from "./socket-handlers/agent-proxy-socket-handler";
 import { AgentSocketHandler } from "./agent-socket-handler";
 import { AgentSocket } from "../common/agent-socket";
 import { ManageAgentSocketHandler } from "./socket-handlers/manage-agent-socket-handler";
 import { Terminal } from "./terminal";
+import { DockerClient } from "./docker-client";
 
 export class DockgeServer {
     app : Express;
@@ -560,6 +560,29 @@ export class DockgeServer {
         }
 
         log.info("server", `Data Dir: ${this.config.dataDir}`);
+
+        // Check Docker version
+        this.checkDockerVersion();
+    }
+
+    /**
+     * Check and log Docker version information
+     */
+    async checkDockerVersion() {
+        try {
+            const dockerClient = DockerClient.getInstance();
+            const versionInfo = await dockerClient.getVersion();
+            log.info("server", `Docker Version: ${versionInfo.version} (API: ${versionInfo.apiVersion})`);
+
+            const isAvailable = await dockerClient.isDockerAvailable();
+            if (!isAvailable) {
+                log.warn("server", "Docker daemon is not accessible. Please check your Docker installation.");
+            }
+        } catch (e) {
+            if (e instanceof Error) {
+                log.error("server", "Failed to check Docker version: " + e.message);
+            }
+        }
     }
 
     /**
@@ -617,24 +640,8 @@ export class DockgeServer {
     }
 
     async getDockerNetworkList() : Promise<string[]> {
-        let res = await childProcessAsync.spawn("docker", [ "network", "ls", "--format", "{{.Name}}" ], {
-            encoding: "utf-8",
-        });
-
-        if (!res.stdout) {
-            return [];
-        }
-
-        let list = res.stdout.toString().split("\n");
-
-        // Remove empty string item
-        list = list.filter((item) => {
-            return item !== "";
-        }).sort((a, b) => {
-            return a.localeCompare(b);
-        });
-
-        return list;
+        const dockerClient = DockerClient.getInstance();
+        return await dockerClient.getNetworkList();
     }
 
     get stackDirFullPath() {

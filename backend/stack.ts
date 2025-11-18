@@ -17,8 +17,8 @@ import {
     UNKNOWN
 } from "../common/util-common";
 import { InteractiveTerminal, Terminal } from "./terminal";
-import childProcessAsync from "promisify-child-process";
 import { Settings } from "./settings";
+import { DockerClient } from "./docker-client";
 
 export class Stack {
 
@@ -93,10 +93,8 @@ export class Stack {
      * Get the status of the stack from `docker compose ps --format json`
      */
     async ps() : Promise<object> {
-        let res = await childProcessAsync.spawn("docker", [ "compose", "ps", "--format", "json" ], {
-            cwd: this.path,
-            encoding: "utf-8",
-        });
+        const dockerClient = DockerClient.getInstance();
+        let res = await dockerClient.composeExec([ "ps", "--format", "json" ], this.path);
         if (!res.stdout) {
             return {};
         }
@@ -301,9 +299,8 @@ export class Stack {
         }
 
         // Get status from docker compose ls
-        let res = await childProcessAsync.spawn("docker", [ "compose", "ls", "--all", "--format", "json" ], {
-            encoding: "utf-8",
-        });
+        const dockerClient = DockerClient.getInstance();
+        let res = await dockerClient.composeExec([ "ls", "--all", "--format", "json" ], process.cwd());
 
         if (!res.stdout) {
             return stackList;
@@ -338,9 +335,8 @@ export class Stack {
     static async getStatusList() : Promise<Map<string, number>> {
         let statusList = new Map<string, number>();
 
-        let res = await childProcessAsync.spawn("docker", [ "compose", "ls", "--all", "--format", "json" ], {
-            encoding: "utf-8",
-        });
+        const dockerClient = DockerClient.getInstance();
+        let res = await dockerClient.composeExec([ "ls", "--all", "--format", "json" ], process.cwd());
 
         if (!res.stdout) {
             return statusList;
@@ -500,10 +496,8 @@ export class Stack {
         let statusList = new Map<string, number>();
 
         try {
-            let res = await childProcessAsync.spawn("docker", [ "compose", "ps", "--format", "json" ], {
-                cwd: this.path,
-                encoding: "utf-8",
-            });
+            const dockerClient = DockerClient.getInstance();
+            let res = await dockerClient.composeExec([ "ps", "--format", "json" ], this.path);
 
             if (!res.stdout) {
                 return statusList;
