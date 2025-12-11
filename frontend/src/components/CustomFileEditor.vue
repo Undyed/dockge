@@ -246,13 +246,21 @@ export default {
 </script>
 
 <style scoped lang="scss">
+@import "../styles/vars.scss";
+
 .custom-file-editor {
     .file-editor-modal {
         .editor-container {
             border: 1px solid #dee2e6;
             border-radius: 0.375rem;
             overflow: hidden;
-            background-color: #2c2f38;
+            background-color: $dark-bg2; // 默认深色背景
+            
+            // 浅色模式下的样式
+            body:not(.dark) & {
+                background-color: $light-bg2 !important;
+                border-color: $light-border-color !important;
+            }
         }
 
         .file-editor {

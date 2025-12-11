@@ -106,22 +106,67 @@ export default {
 
 .list-group {
     background-color: $dark-bg2;
+    border: 1px solid $dark-border-color;
+    border-radius: 10px;
+
+    :global(body:not(.dark)) & {
+        background-color: $light-bg;
+        border-color: $light-border-color;
+    }
 
     li {
         display: flex;
         align-items: center;
         padding: 10px 0 10px 10px;
+        gap: 10px;
+    }
+}
 
-        .domain-input {
-            flex-grow: 1;
-            background-color: $dark-bg2;
-            border: none;
-            color: $dark-font-color;
-            outline: none;
+.domain-input {
+    flex-grow: 1;
+    background-color: $dark-bg2;
+    border: 1px solid $dark-border-color;
+    color: $dark-font-color;
+    outline: none;
+    border-radius: 10px;
+    padding: 8px 10px;
+    caret-color: $primary;
+    transition: border-color 0.2s $easing-in, box-shadow 0.2s $easing-in, background-color 0.2s $easing-in;
 
-            &::placeholder {
-                color: #1d2634;
-            }
+    &::placeholder {
+        color: $dark-font-color3;
+    }
+
+    &:focus {
+        border-color: $primary;
+        box-shadow: 0 0 0 0.2rem rgba(116, 194, 255, 0.12);
+        background-color: darken($dark-bg2, 2%);
+    }
+
+    &::selection {
+        background-color: rgba(116, 194, 255, 0.35);
+        color: $dark-font-color2;
+    }
+
+    :global(body:not(.dark)) & {
+        background-color: $light-bg;
+        border-color: $light-border-color;
+        color: $light-font-color;
+        caret-color: $primary;
+
+        &::placeholder {
+            color: $light-font-color3;
+        }
+
+        &:focus {
+            background-color: #fdfdfc;
+            border-color: $primary;
+            box-shadow: 0 0 0 0.2rem rgba(116, 194, 255, 0.15);
+        }
+
+        &::selection {
+            background-color: rgba(116, 194, 255, 0.35);
+            color: $light-font-color;
         }
     }
 }

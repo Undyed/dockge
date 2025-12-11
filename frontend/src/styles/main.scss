@@ -737,6 +737,31 @@ body:not(.dark) {
         color: $light-font-color !important;
     }
 
+    // 输入类控件在浅色模式下的统一可见性（光标 + 选区）
+    input:not(.btn):not([type="checkbox"]):not([type="radio"]),
+    textarea,
+    select {
+        caret-color: $primary !important;
+        
+        &::selection {
+            background-color: rgba(116, 194, 255, 0.35) !important;
+            color: $light-font-color !important;
+        }
+        
+        &::-moz-selection {
+            background-color: rgba(116, 194, 255, 0.35) !important;
+            color: $light-font-color !important;
+        }
+    }
+
+    // 自定义简洁输入（domain-input/no-bg）在浅色模式下的背景/边框
+    .domain-input,
+    .no-bg {
+        background-color: $light-bg !important;
+        border-color: $light-border-color !important;
+        color: $light-font-color !important;
+    }
+
     // 柔和的阴影盒子
     .shadow-box {
         background-color: $light-bg;
@@ -875,9 +900,20 @@ body:not(.dark) {
     // YAML编辑器和Prism编辑器
     .editor-box {
         background-color: $light-bg !important;
+        border: 1px solid $light-border-color !important;
+        border-radius: 0.5rem !important;
+        transition: all 0.2s ease !important;
         
         &.edit-mode {
             background-color: $light-bg2 !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+        }
+        
+        // 焦点状态
+        &:focus-within,
+        &:has(.prism-editor__textarea:focus) {
+            border-color: $primary !important;
+            box-shadow: 0 0 0 3px rgba(116, 194, 255, 0.1) !important;
         }
     }
 
@@ -886,6 +922,7 @@ body:not(.dark) {
         background-color: $light-bg2 !important;
         color: $light-font-color !important;
         caret-color: $primary !important; // 光标颜色
+        border-radius: 0.5rem !important;
         
         // 文本选择高亮
         &::selection {
@@ -900,9 +937,18 @@ body:not(.dark) {
         
         // 行号样式优化
         .prism-editor__line-numbers {
-            background-color: darken($light-bg2, 3%) !important;
+            background-color: darken($light-bg2, 2%) !important;
             color: $light-font-color3 !important;
             border-right: 1px solid $light-border-color !important;
+            padding: 0.5rem 0.75rem !important;
+            min-width: 3rem !important;
+            text-align: right !important;
+            user-select: none !important;
+        }
+        
+        // 当前行高亮
+        .prism-editor__line-highlight {
+            background-color: rgba(116, 194, 255, 0.08) !important;
         }
     }
 
@@ -931,31 +977,59 @@ body:not(.dark) {
         }
     }
 
-    .prism-editor__textarea,
-    .prism-editor__editor {
-        background-color: $light-bg2 !important;
+.prism-editor__textarea,
+.prism-editor__editor {
+    background-color: $light-bg2 !important;
+    color: $light-font-color !important;
+    caret-color: $primary !important; // 光标颜色
+    font-family: 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace !important;
+    font-size: 14px !important;
+    line-height: 1.6 !important;
+    
+    // 文本选择高亮
+    &::selection {
+        background-color: rgba(116, 194, 255, 0.3) !important;
         color: $light-font-color !important;
-        caret-color: $primary !important; // 光标颜色
-        
-        // 文本选择高亮
-        &::selection {
-            background-color: rgba(116, 194, 255, 0.3) !important;
-            color: $light-font-color !important;
-        }
-        
-        &::-moz-selection {
-            background-color: rgba(116, 194, 255, 0.3) !important;
-            color: $light-font-color !important;
-        }
     }
+    
+    &::-moz-selection {
+        background-color: rgba(116, 194, 255, 0.3) !important;
+        color: $light-font-color !important;
+    }
+    
+    // 占位符样式
+    &::placeholder {
+        color: $light-font-color3 !important;
+    }
+}
+
+// 保持文本透明以避免覆盖语法高亮，但显式设置光标与选区底色
+.prism-editor__textarea {
+    -webkit-text-fill-color: transparent !important;
+    color: transparent !important;
+    caret-color: $primary !important;
+
+    &::selection {
+        background-color: rgba(116, 194, 255, 0.35) !important;
+        color: transparent !important;
+    }
+
+    &::-moz-selection {
+        background-color: rgba(116, 194, 255, 0.35) !important;
+        color: transparent !important;
+    }
+}
 
     .prism-editor__container {
         background-color: $light-bg2 !important;
+        border-radius: 0.5rem !important;
+        overflow: hidden !important;
         
         // 确保编辑器获得焦点时的样式
         &:focus-within {
-            outline: 2px solid rgba(116, 194, 255, 0.3);
-            outline-offset: -2px;
+            outline: 2px solid rgba(116, 194, 255, 0.25) !important;
+            outline-offset: -2px !important;
+            box-shadow: inset 0 0 0 1px rgba(116, 194, 255, 0.15) !important;
         }
     }
 
@@ -963,11 +1037,15 @@ body:not(.dark) {
     .custom-file-editor {
         .editor-container {
             background-color: $light-bg2 !important;
-            border-color: $light-border-color !important;
+            border: 1px solid $light-border-color !important;
+            border-radius: 0.5rem !important;
+            overflow: hidden !important;
+            transition: all 0.2s ease !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
             
             &:focus-within {
                 border-color: $primary !important;
-                box-shadow: 0 0 0 2px rgba(116, 194, 255, 0.15) !important;
+                box-shadow: 0 0 0 3px rgba(116, 194, 255, 0.1), 0 2px 8px rgba(0, 0, 0, 0.08) !important;
             }
         }
 
@@ -986,6 +1064,14 @@ body:not(.dark) {
                 background-color: rgba(116, 194, 255, 0.3) !important;
                 color: $light-font-color !important;
             }
+            
+            // 行号样式
+            :deep(.prism-editor__line-numbers) {
+                background-color: darken($light-bg2, 2%) !important;
+                color: $light-font-color3 !important;
+                border-right: 1px solid $light-border-color !important;
+                padding: 0.5rem 0.75rem !important;
+            }
         }
     }
 
@@ -993,11 +1079,15 @@ body:not(.dark) {
     .modal-body {
         .editor-container {
             background-color: $light-bg2 !important;
-            border-color: $light-border-color !important;
+            border: 1px solid $light-border-color !important;
+            border-radius: 0.5rem !important;
+            overflow: hidden !important;
+            transition: all 0.2s ease !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
             
             &:focus-within {
                 border-color: $primary !important;
-                box-shadow: 0 0 0 2px rgba(116, 194, 255, 0.15) !important;
+                box-shadow: 0 0 0 3px rgba(116, 194, 255, 0.1), 0 2px 8px rgba(0, 0, 0, 0.08) !important;
             }
         }
 
@@ -1017,6 +1107,14 @@ body:not(.dark) {
                 background-color: rgba(116, 194, 255, 0.3) !important;
                 color: $light-font-color !important;
             }
+            
+            // 行号样式
+            :deep(.prism-editor__line-numbers) {
+                background-color: darken($light-bg2, 2%) !important;
+                color: $light-font-color3 !important;
+                border-right: 1px solid $light-border-color !important;
+                padding: 0.5rem 0.75rem !important;
+            }
         }
     }
 
@@ -1032,14 +1130,69 @@ body:not(.dark) {
             background-color: darken($light-bg2, 2%) !important;
             color: $light-font-color3 !important;
             border-right: 1px solid $light-border-color !important;
-            user-select: none;
+            padding: 0.5rem 0.75rem !important;
+            min-width: 3rem !important;
+            text-align: right !important;
+            user-select: none !important;
+            transition: border-color 0.2s ease !important;
         }
         
         // 编辑器获得焦点时的样式
         &:focus-within {
             .prism-editor__line-numbers {
-                border-right-color: $primary !important;
+                border-right-color: rgba(116, 194, 255, 0.4) !important;
             }
+        }
+    }
+    
+    // 所有 Prism 编辑器的行号统一样式
+    .prism-editor__line-numbers {
+        body:not(.dark) & {
+            background-color: darken($light-bg2, 2%) !important;
+            color: $light-font-color3 !important;
+            border-right: 1px solid $light-border-color !important;
+            padding: 0.5rem 0.75rem !important;
+            min-width: 3rem !important;
+            text-align: right !important;
+            user-select: none !important;
+        }
+    }
+    
+    // 统一所有编辑器的滚动条样式
+    .prism-editor__editor,
+    .prism-editor__textarea,
+    .yaml-editor,
+    .env-editor,
+    .file-editor {
+        // 滚动条样式
+        &::-webkit-scrollbar {
+            width: 10px !important;
+            height: 10px !important;
+        }
+        
+        &::-webkit-scrollbar-track {
+            background-color: $light-bg !important;
+            border-radius: 5px !important;
+        }
+        
+        &::-webkit-scrollbar-thumb {
+            background-color: rgba(132, 146, 166, 0.3) !important;
+            border-radius: 5px !important;
+            border: 2px solid $light-bg !important;
+            
+            &:hover {
+                background-color: rgba(132, 146, 166, 0.5) !important;
+            }
+        }
+    }
+    
+    // 统一编辑器容器的内边距和间距
+    .editor-box,
+    .editor-container {
+        padding: 0 !important;
+        
+        .prism-editor__container {
+            padding: 0.75rem !important;
         }
     }
 
@@ -1049,11 +1202,11 @@ body:not(.dark) {
         &.prolog,
         &.doctype,
         &.cdata {
-            color: #6a737d !important; // 注释颜色
+            color: #6a737d !important; // 注释颜色 - 柔和的灰色
         }
         
         &.punctuation {
-            color: #586069 !important; // 标点符号
+            color: #5a6c7d !important; // 标点符号 - 使用主题字体颜色2
         }
         
         &.property,
@@ -1063,7 +1216,7 @@ body:not(.dark) {
         &.constant,
         &.symbol,
         &.deleted {
-            color: #d73a49 !important; // 属性和数字
+            color: #c7254e !important; // 属性和数字 - 更柔和的红色
         }
         
         &.selector,
@@ -1072,24 +1225,40 @@ body:not(.dark) {
         &.char,
         &.builtin,
         &.inserted {
-            color: #032f62 !important; // 字符串
+            color: #0d7377 !important; // 字符串 - 深青色，在浅色背景下更清晰
         }
         
         &.operator,
         &.entity,
         &.url {
-            color: #6f42c1 !important; // 操作符
+            color: #6f42c1 !important; // 操作符 - 保持紫色
         }
         
         &.atrule,
         &.attr-value,
         &.keyword {
-            color: #d73a49 !important; // 关键字
+            color: #d73a49 !important; // 关键字 - 保持红色以突出显示
         }
         
         &.function,
         &.class-name {
-            color: #6f42c1 !important; // 函数名
+            color: #6f42c1 !important; // 函数名 - 保持紫色
+        }
+        
+        // YAML 特定语法高亮
+        &.key.atrule {
+            color: #005cc5 !important; // YAML 键名 - 蓝色
+        }
+        
+        // 变量和插值
+        &.variable,
+        &.interpolation {
+            color: #e36209 !important; // 橙色，用于变量
+        }
+        
+        // 正则表达式
+        &.regex {
+            color: #032f62 !important; // 深蓝色
         }
     }
 

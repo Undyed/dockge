@@ -815,7 +815,12 @@ export default {
     font-family: 'JetBrains Mono', monospace;
     font-size: 14px;
     &.edit-mode {
-        background-color: #2c2f38 !important;
+        background-color: $dark-bg2 !important; // 默认深色背景
+        
+        // 浅色模式下的样式
+        body:not(.dark) & {
+            background-color: $light-bg2 !important;
+        }
     }
 }
 
