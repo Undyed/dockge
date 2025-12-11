@@ -14,8 +14,8 @@
                 </option>
             </select>
         </div>
-        <div v-show="false" class="my-4">
-            <label for="timezone" class="form-label">{{ $t("Theme") }}</label>
+        <div class="my-4">
+            <label for="theme" class="form-label">{{ $t("Theme") }}</label>
             <div>
                 <div
                     class="btn-group"

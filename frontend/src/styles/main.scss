@@ -2,8 +2,20 @@
 @import "bootstrap/scss/bootstrap";
 @import "bootstrap-vue-next/dist/bootstrap-vue-next.css";
 
+// 全局背景色设置 - 确保浅色主题使用护眼背景
+html, body {
+    &:not(.dark) {
+        background-color: #f5f3f0 !important;
+    }
+}
+
 #app {
     font-family: BlinkMacSystemFont, segoe ui, Roboto, helvetica neue, Arial, noto sans, sans-serif, apple color emoji, segoe ui emoji, segoe ui symbol, noto color emoji;
+    
+    &:not(.dark) {
+        background-color: #f5f3f0 !important;
+        min-height: 100vh;
+    }
 }
 
 h1 {
@@ -688,6 +700,446 @@ code {
 .prism-editor__container {
     overflow-x: scroll !important;
 }*/
+
+// Light Theme optimizations - Eye-friendly warm theme
+body:not(.dark) {
+    background-color: $light-bg !important;
+    color: $light-font-color !important;
+}
+
+// 确保主要容器也使用护眼背景色
+body:not(.dark) #app {
+    background-color: $light-bg !important;
+    min-height: 100vh;
+}
+
+// 覆盖Bootstrap默认背景和全局样式
+body:not(.dark) {
+    
+    // 确保HTML和body都使用护眼背景
+    html, body {
+        background-color: $light-bg !important;
+    }
+
+    // 主要容器背景
+    .container, .container-fluid {
+        background-color: transparent;
+    }
+
+    // 全局文本选择样式
+    ::selection {
+        background-color: rgba(116, 194, 255, 0.3) !important;
+        color: $light-font-color !important;
+    }
+    
+    ::-moz-selection {
+        background-color: rgba(116, 194, 255, 0.3) !important;
+        color: $light-font-color !important;
+    }
+
+    // 柔和的阴影盒子
+    .shadow-box {
+        background-color: $light-bg;
+        box-shadow: 0 2px 12px $light-shadow;
+        border: 1px solid rgba(232, 229, 224, 0.6);
+    }
+
+    // 表单控件优化
+    .form-control,
+    .form-select,
+    textarea.form-control {
+        background-color: $light-bg !important;
+        border-color: $light-border-color !important;
+        color: $light-font-color !important;
+        caret-color: $primary !important; // 光标颜色
+
+        &:focus {
+            border-color: $primary !important;
+            box-shadow: 0 0 0 0.2rem rgba(116, 194, 255, 0.15) !important;
+            background-color: #fdfdfc !important;
+        }
+
+        &::placeholder {
+            color: $light-font-color3 !important;
+        }
+
+        &:disabled,
+        &[readonly] {
+            background-color: $light-bg2 !important;
+            color: $light-font-color2 !important;
+            caret-color: transparent !important; // 禁用状态下隐藏光标
+        }
+        
+        // 文本选择高亮
+        &::selection {
+            background-color: rgba(116, 194, 255, 0.3) !important;
+            color: $light-font-color !important;
+        }
+        
+        &::-moz-selection {
+            background-color: rgba(116, 194, 255, 0.3) !important;
+            color: $light-font-color !important;
+        }
+    }
+
+    .form-text {
+        color: $light-font-color3;
+    }
+
+    // 列表项优化
+    .list-group-item {
+        background-color: $light-bg;
+        color: $light-font-color;
+        border-color: $light-border-color;
+
+        &:hover {
+            background-color: $light-bg2;
+        }
+    }
+
+    // 模态框优化
+    .modal-content {
+        background-color: $light-bg;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        border: 1px solid $light-border-color;
+    }
+
+    // 按钮优化
+    .btn-normal {
+        background-color: $light-bg2;
+        border-color: $light-border-color;
+        color: $light-font-color;
+
+        &:hover {
+            background-color: darken($light-bg2, 3%);
+            border-color: darken($light-border-color, 8%);
+        }
+    }
+
+    .btn-outline-normal {
+        border-color: $light-border-color;
+        color: $light-font-color2;
+
+        &:hover {
+            background-color: $light-bg2;
+            border-color: darken($light-border-color, 10%);
+        }
+
+        &.active {
+            background-color: $highlight-light;
+            border-color: $primary;
+        }
+    }
+
+    // 堆栈列表优化
+    .stack-list .item {
+        &:hover {
+            background-color: $light-bg2;
+        }
+
+        &.active {
+            background-color: $highlight-light;
+            border-left: 3px solid $primary;
+        }
+    }
+
+    // 设置菜单优化
+    .settings-menu {
+        .menu-item:hover {
+            background-color: $light-bg2;
+        }
+
+        .active .menu-item {
+            background-color: $highlight-light;
+        }
+    }
+
+    // 固定底部栏
+    .fixed-bottom-bar {
+        background-color: rgba($light-bg, 0.95);
+        backdrop-filter: blur(8px);
+        border-top: 1px solid $light-border-color;
+    }
+
+    // 分割线
+    h5.settings-subheading::after {
+        border-bottom-color: $light-border-color;
+    }
+
+    // 代码编辑器
+    .code-editor, .css-editor {
+        background-color: $light-bg2;
+        border-color: $light-border-color;
+    }
+
+    // YAML编辑器和Prism编辑器
+    .editor-box {
+        background-color: $light-bg !important;
+        
+        &.edit-mode {
+            background-color: $light-bg2 !important;
+        }
+    }
+
+    .yaml-editor,
+    .env-editor {
+        background-color: $light-bg2 !important;
+        color: $light-font-color !important;
+        caret-color: $primary !important; // 光标颜色
+        
+        // 文本选择高亮
+        &::selection {
+            background-color: rgba(116, 194, 255, 0.3) !important;
+            color: $light-font-color !important;
+        }
+        
+        &::-moz-selection {
+            background-color: rgba(116, 194, 255, 0.3) !important;
+            color: $light-font-color !important;
+        }
+        
+        // 行号样式优化
+        .prism-editor__line-numbers {
+            background-color: darken($light-bg2, 3%) !important;
+            color: $light-font-color3 !important;
+            border-right: 1px solid $light-border-color !important;
+        }
+    }
+
+    // Docker Run文本区域
+    .docker-run {
+        background-color: $light-bg2 !important;
+        color: $light-font-color !important;
+        border-color: $light-border-color !important;
+        caret-color: $primary !important; // 光标颜色
+
+        &:focus {
+            background-color: $light-bg !important;
+            border-color: $primary !important;
+            box-shadow: 0 0 0 0.2rem rgba(116, 194, 255, 0.15) !important;
+        }
+        
+        // 文本选择高亮
+        &::selection {
+            background-color: rgba(116, 194, 255, 0.3) !important;
+            color: $light-font-color !important;
+        }
+        
+        &::-moz-selection {
+            background-color: rgba(116, 194, 255, 0.3) !important;
+            color: $light-font-color !important;
+        }
+    }
+
+    .prism-editor__textarea,
+    .prism-editor__editor {
+        background-color: $light-bg2 !important;
+        color: $light-font-color !important;
+        caret-color: $primary !important; // 光标颜色
+        
+        // 文本选择高亮
+        &::selection {
+            background-color: rgba(116, 194, 255, 0.3) !important;
+            color: $light-font-color !important;
+        }
+        
+        &::-moz-selection {
+            background-color: rgba(116, 194, 255, 0.3) !important;
+            color: $light-font-color !important;
+        }
+    }
+
+    .prism-editor__container {
+        background-color: $light-bg2 !important;
+        
+        // 确保编辑器获得焦点时的样式
+        &:focus-within {
+            outline: 2px solid rgba(116, 194, 255, 0.3);
+            outline-offset: -2px;
+        }
+    }
+
+    // 自定义文件编辑器
+    .custom-file-editor {
+        .editor-container {
+            background-color: $light-bg2 !important;
+            border-color: $light-border-color !important;
+            
+            &:focus-within {
+                border-color: $primary !important;
+                box-shadow: 0 0 0 2px rgba(116, 194, 255, 0.15) !important;
+            }
+        }
+
+        .file-editor {
+            background-color: $light-bg2 !important;
+            color: $light-font-color !important;
+            caret-color: $primary !important; // 光标颜色
+            
+            // 文本选择高亮
+            &::selection {
+                background-color: rgba(116, 194, 255, 0.3) !important;
+                color: $light-font-color !important;
+            }
+            
+            &::-moz-selection {
+                background-color: rgba(116, 194, 255, 0.3) !important;
+                color: $light-font-color !important;
+            }
+        }
+    }
+
+    // 模态框中的编辑器
+    .modal-body {
+        .editor-container {
+            background-color: $light-bg2 !important;
+            border-color: $light-border-color !important;
+            
+            &:focus-within {
+                border-color: $primary !important;
+                box-shadow: 0 0 0 2px rgba(116, 194, 255, 0.15) !important;
+            }
+        }
+
+        .file-editor,
+        .yaml-editor {
+            background-color: $light-bg2 !important;
+            color: $light-font-color !important;
+            caret-color: $primary !important; // 光标颜色
+            
+            // 文本选择高亮
+            &::selection {
+                background-color: rgba(116, 194, 255, 0.3) !important;
+                color: $light-font-color !important;
+            }
+            
+            &::-moz-selection {
+                background-color: rgba(116, 194, 255, 0.3) !important;
+                color: $light-font-color !important;
+            }
+        }
+    }
+
+    // 编辑器通用样式优化
+    .prism-editor-wrapper {
+        // 当前行高亮
+        .prism-editor__line-highlight {
+            background-color: rgba(116, 194, 255, 0.1) !important;
+        }
+        
+        // 行号区域
+        .prism-editor__line-numbers {
+            background-color: darken($light-bg2, 2%) !important;
+            color: $light-font-color3 !important;
+            border-right: 1px solid $light-border-color !important;
+            user-select: none;
+        }
+        
+        // 编辑器获得焦点时的样式
+        &:focus-within {
+            .prism-editor__line-numbers {
+                border-right-color: $primary !important;
+            }
+        }
+    }
+
+    // 语法高亮优化（针对浅色主题）
+    .token {
+        &.comment,
+        &.prolog,
+        &.doctype,
+        &.cdata {
+            color: #6a737d !important; // 注释颜色
+        }
+        
+        &.punctuation {
+            color: #586069 !important; // 标点符号
+        }
+        
+        &.property,
+        &.tag,
+        &.boolean,
+        &.number,
+        &.constant,
+        &.symbol,
+        &.deleted {
+            color: #d73a49 !important; // 属性和数字
+        }
+        
+        &.selector,
+        &.attr-name,
+        &.string,
+        &.char,
+        &.builtin,
+        &.inserted {
+            color: #032f62 !important; // 字符串
+        }
+        
+        &.operator,
+        &.entity,
+        &.url {
+            color: #6f42c1 !important; // 操作符
+        }
+        
+        &.atrule,
+        &.attr-value,
+        &.keyword {
+            color: #d73a49 !important; // 关键字
+        }
+        
+        &.function,
+        &.class-name {
+            color: #6f42c1 !important; // 函数名
+        }
+    }
+
+    // 代码块优化
+    code {
+        background-color: rgba(244, 242, 239, 0.8);
+        color: #5a6c7d;
+        border: 1px solid rgba(232, 229, 224, 0.5);
+    }
+
+    // 可编辑内容优化
+    [contenteditable=true] {
+        background-color: rgba(244, 242, 239, 0.5);
+
+        &:focus {
+            background-color: rgba(244, 242, 239, 0.8);
+        }
+
+        &:hover {
+            background-color: rgba(244, 242, 239, 0.6);
+        }
+    }
+
+    // 滚动条优化
+    ::-webkit-scrollbar-thumb {
+        background: rgba(132, 146, 166, 0.3);
+        
+        &:hover {
+            background: rgba(132, 146, 166, 0.5);
+        }
+    }
+
+    // 分页组件
+    .page-link {
+        background-color: $light-bg;
+        border-color: $light-border-color;
+        color: $light-font-color;
+
+        &:hover {
+            background-color: $light-bg2;
+            border-color: darken($light-border-color, 10%);
+        }
+    }
+
+    .page-item.disabled .page-link {
+        background-color: $light-bg2;
+        border-color: $light-border-color;
+        color: $light-font-color3;
+    }
+}
 
 // Localization
 @import "localization.scss";

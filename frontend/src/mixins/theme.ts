@@ -54,9 +54,9 @@ export default defineComponent({
     },
 
     mounted() {
-        // Default Dark
+        // Default Auto (follows system preference)
         if (! this.userTheme) {
-            this.userTheme = "dark";
+            this.userTheme = "auto";
         }
 
         document.body.classList.add(this.theme);
@@ -72,7 +72,8 @@ export default defineComponent({
             if (this.theme === "dark") {
                 document.querySelector("#theme-color").setAttribute("content", "#161B22");
             } else {
-                document.querySelector("#theme-color").setAttribute("content", "#5cdd8b");
+                // 使用护眼的米色作为浅色主题的元标签颜色
+                document.querySelector("#theme-color").setAttribute("content", "#f5f3f0");
             }
         }
     }
