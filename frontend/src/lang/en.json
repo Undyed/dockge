@@ -134,5 +134,21 @@
     "ConsoleNotEnabledMSG1": "Console is a powerful tool that allows you to execute any commands such as <code>docker</code>, <code>rm</code> within the Dockge's container in this Web UI.",
     "ConsoleNotEnabledMSG2": "It might be dangerous since this Dockge container is connecting to the host's Docker daemon. Also Dockge could be possibly taken down by commands like <code>rm -rf</code>" ,
     "ConsoleNotEnabledMSG3": "If you understand the risk, you can enable it by setting <code>DOCKGE_ENABLE_CONSOLE=true</code> in the environment variables.",
-    "confirmLeaveStack": "You are currently editing a stack. Are you sure you want to leave?"
+    "confirmLeaveStack": "You are currently editing a stack. Are you sure you want to leave?",
+    "customFiles": "Custom Files",
+    "selectOrEnterFile": "Select or Enter File",
+    "selectFile": "-- Select a file --",
+    "customFilePath": "Custom File Path",
+    "enterFilePath": "Enter file path (e.g., config.json, data/settings.txt)",
+    "relativeToStackDir": "Relative to stack directory",
+    "saveFile": "Save File",
+    "close": "Close",
+    "pleaseEnterFilePath": "Please enter a file path",
+    "File saved": "File saved",
+    "refresh": "Refresh",
+    "create": "Create",
+    "manual": "Manual",
+    "edit": "Edit",
+    "fileEditor": "File Editor",
+    "file": "File"
 }

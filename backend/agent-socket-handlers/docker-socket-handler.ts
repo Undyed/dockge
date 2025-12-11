@@ -3,6 +3,7 @@ import { DockgeServer } from "../dockge-server";
 import { callbackError, callbackResult, checkLogin, DockgeSocket, ValidationError } from "../util-server";
 import { Stack } from "../stack";
 import { AgentSocket } from "../../common/agent-socket";
+import { log } from "../log";
 
 export class DockerSocketHandler extends AgentSocketHandler {
     create(socket : DockgeSocket, server : DockgeServer, agentSocket : AgentSocket) {
@@ -93,14 +94,17 @@ export class DockerSocketHandler extends AgentSocketHandler {
         // requestStackList
         agentSocket.on("requestStackList", async (callback) => {
             try {
+                log.debug("docker-socket-handler", "requestStackList called");
                 checkLogin(socket);
-                server.sendStackList();
+                await server.sendStackList();
+                log.debug("docker-socket-handler", "sendStackList completed");
                 callbackResult({
                     ok: true,
                     msg: "Updated",
                     msgi18n: true,
                 }, callback);
             } catch (e) {
+                log.error("docker-socket-handler", "requestStackList error:", e);
                 callbackError(e, callback);
             }
         });

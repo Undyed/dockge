@@ -6,6 +6,7 @@ data
 stacks
 tmp
 /private
+.DS_Store
 
 # Git only
 frontend-dist

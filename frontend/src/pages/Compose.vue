@@ -211,6 +211,13 @@
                         <div class="shadow-box big-padding mb-3">
                             <NetworkInput />
                         </div>
+
+                        <!-- Custom File Editor -->
+                        <CustomFileEditor 
+                            :stack-name="stack.name" 
+                            :endpoint="endpoint" 
+                            :is-edit-mode="isEditMode"
+                        />
                     </div>
 
                     <!-- <div class="shadow-box big-padding mb-3">
@@ -256,6 +263,7 @@ import {
 } from "../../../common/util-common";
 import { BModal } from "bootstrap-vue-next";
 import NetworkInput from "../components/NetworkInput.vue";
+import CustomFileEditor from "../components/CustomFileEditor.vue";
 import dotenv from "dotenv";
 
 const template = `
@@ -280,6 +288,7 @@ let prismjsSymbolDefinition = {
 export default {
     components: {
         NetworkInput,
+        CustomFileEditor,
         FontAwesomeIcon,
         PrismEditor,
         BModal,
