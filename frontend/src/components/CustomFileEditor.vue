@@ -1,7 +1,7 @@
 <template>
     <div v-if="isEditMode" class="custom-file-editor">
         <h4 class="mb-3">{{ $t("customFiles") }}</h4>
-        
+
         <!-- File selector -->
         <div class="shadow-box big-padding mb-3">
             <div class="mb-3">
@@ -32,18 +32,18 @@
             <div v-if="showCustomInput" class="mb-3">
                 <label class="form-label">{{ $t("customFilePath") }}</label>
                 <div class="input-group">
-                    <input 
-                        v-model="customFilePath" 
-                        type="text" 
-                        class="form-control" 
+                    <input
+                        v-model="customFilePath"
+                        type="text"
+                        class="form-control"
                         :placeholder="$t('enterFilePath')"
                         @keyup.enter="loadCustomFile"
                     />
-                    <button class="btn btn-success" @click="createNewFile" :disabled="!customFilePath">
+                    <button class="btn btn-success" :disabled="!customFilePath" @click="createNewFile">
                         <font-awesome-icon icon="plus" class="me-1" />
                         {{ $t("create") }}
                     </button>
-                    <button class="btn btn-primary" @click="loadCustomFile" :disabled="!customFilePath">
+                    <button class="btn btn-primary" :disabled="!customFilePath" @click="loadCustomFile">
                         <font-awesome-icon icon="edit" class="me-1" />
                         {{ $t("edit") }}
                     </button>
@@ -53,8 +53,8 @@
         </div>
 
         <!-- File Editor Modal -->
-        <BModal 
-            v-model="showEditor" 
+        <BModal
+            v-model="showEditor"
             :title="currentFile || $t('fileEditor')"
             size="xl"
             :cancel-title="$t('close')"
@@ -138,10 +138,10 @@ export default {
         },
     },
     mounted() {
-        console.log("CustomFileEditor mounted:", { 
-            stackName: this.stackName, 
-            endpoint: this.endpoint, 
-            isEditMode: this.isEditMode 
+        console.log("CustomFileEditor mounted:", {
+            stackName: this.stackName,
+            endpoint: this.endpoint,
+            isEditMode: this.isEditMode
         });
         if (this.isEditMode && this.stackName) {
             this.loadFileList();
@@ -153,7 +153,7 @@ export default {
                 console.warn("Cannot load file list: stackName is empty");
                 return;
             }
-            
+
             console.log("Loading file list for stack:", this.stackName, "endpoint:", this.endpoint);
             this.$root.emitAgent(this.endpoint, "listStackFiles", this.stackName, (res) => {
                 console.log("File list response:", res);
@@ -220,7 +220,7 @@ export default {
                 this.$root.toastError(this.$t("pleaseEnterFilePath"));
                 return;
             }
-            
+
             // Create a new file with empty content
             this.currentFile = this.customFilePath;
             this.fileContent = "";
@@ -255,7 +255,7 @@ export default {
             border-radius: 0.375rem;
             overflow: hidden;
             background-color: $dark-bg2; // 默认深色背景
-            
+
             // 浅色模式下的样式
             body:not(.dark) & {
                 background-color: $light-bg2 !important;

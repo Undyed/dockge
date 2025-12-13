@@ -3,8 +3,8 @@ import composerize from "composerize";
 import { SocketHandler } from "../socket-handler.js";
 import { DockgeServer } from "../dockge-server";
 import { log } from "../log";
-import { R } from "redbean-node";
-import { loginRateLimiter, twoFaRateLimiter } from "../rate-limiter";
+import { UserRepo } from "../repositories/user-repo";
+import { loginRateLimiter } from "../rate-limiter";
 import { generatePasswordHash, needRehashPassword, shake256, SHAKE256_LENGTH, verifyPassword } from "../password-hash";
 import { User } from "../models/user";
 import {
@@ -33,14 +33,11 @@ export class MainSocketHandler extends SocketHandler {
                     throw new Error("Password is too weak. It should contain alphabetic and numeric characters. It must be at least 6 characters in length.");
                 }
 
-                if ((await R.knex("user").count("id as count").first()).count !== 0) {
+                if ((await UserRepo.getCount()) !== 0) {
                     throw new Error("Dockge has been initialized. If you want to run setup again, please delete the database.");
                 }
 
-                const user = R.dispense("user");
-                user.username = username;
-                user.password = generatePasswordHash(password);
-                await R.store(user);
+                await UserRepo.create(username, generatePasswordHash(password));
 
                 server.needSetup = false;
 
@@ -71,9 +68,7 @@ export class MainSocketHandler extends SocketHandler {
 
                 log.info("auth", "Username from JWT: " + decoded.username);
 
-                const user = await R.findOne("user", " username = ? AND active = 1 ", [
-                    decoded.username,
-                ]) as User;
+                const user = await UserRepo.getByUsernameActive(decoded.username) as unknown as User;
 
                 if (user) {
                     // Check if the password changed
@@ -169,10 +164,7 @@ export class MainSocketHandler extends SocketHandler {
                     if (user.twofa_last_token !== data.token && verify) {
                         server.afterLogin(socket, user);
 
-                        await R.exec("UPDATE `user` SET twofa_last_token = ? WHERE id = ? ", [
-                            data.token,
-                            socket.userID,
-                        ]);
+                        await UserRepo.updateTwofaLastToken(socket.userID, data.token);
 
                         log.info("auth", `Successfully logged in user ${data.username}. IP=${clientIP}`);
 
@@ -332,17 +324,13 @@ export class MainSocketHandler extends SocketHandler {
             return null;
         }
 
-        const user = await R.findOne("user", " username = ? AND active = 1 ", [
-            username,
-        ]) as User;
+        const userRow = await UserRepo.getByUsernameActive(username);
+        const user = userRow as unknown as User;
 
         if (user && verifyPassword(password, user.password)) {
             // Upgrade the hash to bcrypt
             if (needRehashPassword(user.password)) {
-                await R.exec("UPDATE `user` SET password = ? WHERE id = ? ", [
-                    generatePasswordHash(password),
-                    user.id,
-                ]);
+                await UserRepo.updatePasswordById(user.id, generatePasswordHash(password));
             }
             return user;
         }

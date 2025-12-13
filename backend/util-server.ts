@@ -1,9 +1,9 @@
 import { Socket } from "socket.io";
 import { Terminal } from "./terminal";
-import { randomBytes } from "crypto";
 import { log } from "./log";
 import { ERROR_TYPE_VALIDATION } from "../common/util-common";
-import { R } from "redbean-node";
+import { User } from "./models/user";
+import { UserRepo } from "./repositories/user-repo";
 import { verifyPassword } from "./password-hash";
 import fs from "fs";
 import { AgentManager } from "./agent-manager";
@@ -83,16 +83,18 @@ export function callbackResult(result : unknown, callback : unknown) {
     callback(result);
 }
 
-export async function doubleCheckPassword(socket : DockgeSocket, currentPassword : unknown) {
+export async function doubleCheckPassword(socket : DockgeSocket, currentPassword : unknown) : Promise<User> {
     if (typeof currentPassword !== "string") {
         throw new Error("Wrong data type?");
     }
 
-    let user = await R.findOne("user", " id = ? AND active = 1 ", [
-        socket.userID,
-    ]);
+    const row = await UserRepo.getByIdActive(socket.userID);
+    if (!row) {
+        throw new Error("Incorrect current password");
+    }
+    const user = Object.assign(new User(), row);
 
-    if (!user || !verifyPassword(currentPassword, user.password)) {
+    if (!verifyPassword(currentPassword, user.password)) {
         throw new Error("Incorrect current password");
     }
 

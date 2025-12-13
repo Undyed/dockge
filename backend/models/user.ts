@@ -1,9 +1,14 @@
 import jwt from "jsonwebtoken";
-import { R } from "redbean-node";
-import { BeanModel } from "redbean-node/dist/bean-model";
+import { UserRepo } from "../repositories/user-repo";
 import { generatePasswordHash, shake256, SHAKE256_LENGTH } from "../password-hash";
 
-export class User extends BeanModel {
+export class User {
+    id!: number;
+    username!: string;
+    password!: string;
+    twofa_status?: number;
+    twofa_secret?: string;
+    twofa_last_token?: string;
     /**
      * Reset user password
      * Fix #1510, as in the context reset-password.js, there is no auto model mapping. Call this static function instead.
@@ -12,10 +17,7 @@ export class User extends BeanModel {
      * @returns {Promise<void>}
      */
     static async resetPassword(userID : number, newPassword : string) {
-        await R.exec("UPDATE `user` SET password = ? WHERE id = ? ", [
-            generatePasswordHash(newPassword),
-            userID
-        ]);
+        await UserRepo.updatePasswordById(userID, generatePasswordHash(newPassword));
     }
 
     /**

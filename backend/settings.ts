@@ -1,6 +1,6 @@
-import { R } from "redbean-node";
 import { log } from "./log";
 import { LooseObject } from "../common/util-common";
+import { SettingRepo } from "./repositories/setting-repo";
 
 export class Settings {
 
@@ -51,11 +51,12 @@ export class Settings {
             return v;
         }
 
-        const value = await R.getCell("SELECT `value` FROM setting WHERE `key` = ? ", [
-            key,
-        ]);
+        const value = await SettingRepo.getValueByKey(key);
 
         try {
+            if (value === null) {
+                return null;
+            }
             const v = JSON.parse(value);
             log.debug("settings", `Get Setting: ${key}: ${v}`);
 
@@ -78,17 +79,7 @@ export class Settings {
      * @returns {Promise<void>}
      */
     static async set(key : string, value : object | string | number | boolean, type : string | null = null) {
-
-        let bean = await R.findOne("setting", " `key` = ? ", [
-            key,
-        ]);
-        if (!bean) {
-            bean = R.dispense("setting");
-            bean.key = key;
-        }
-        bean.type = type;
-        bean.value = JSON.stringify(value);
-        await R.store(bean);
+        await SettingRepo.set(key, value, type);
 
         Settings.deleteCache([ key ]);
     }
@@ -99,9 +90,7 @@ export class Settings {
      * @returns Settings
      */
     static async getSettings(type : string) {
-        const list = await R.getAll("SELECT `key`, `value` FROM setting WHERE `type` = ? ", [
-            type,
-        ]);
+        const list = await SettingRepo.listByType(type);
 
         const result : LooseObject = {};
 
@@ -123,30 +112,8 @@ export class Settings {
      * @returns {Promise<void>}
      */
     static async setSettings(type : string, data : LooseObject) {
-        const keyList = Object.keys(data);
-
-        const promiseList = [];
-
-        for (const key of keyList) {
-            let bean = await R.findOne("setting", " `key` = ? ", [
-                key
-            ]);
-
-            if (bean == null) {
-                bean = R.dispense("setting");
-                bean.type = type;
-                bean.key = key;
-            }
-
-            if (bean.type === type) {
-                bean.value = JSON.stringify(data[key]);
-                promiseList.push(R.store(bean));
-            }
-        }
-
-        await Promise.all(promiseList);
-
-        Settings.deleteCache(keyList);
+        await SettingRepo.setBulk(type, data);
+        Settings.deleteCache(Object.keys(data));
     }
 
     /**
@@ -171,4 +138,3 @@ export class Settings {
         }
     }
 }
-

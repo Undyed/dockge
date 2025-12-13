@@ -104,7 +104,7 @@ export class DockerSocketHandler extends AgentSocketHandler {
                     msgi18n: true,
                 }, callback);
             } catch (e) {
-                log.error("docker-socket-handler", "requestStackList error:", e);
+                log.error("docker-socket-handler", "requestStackList error: " + (e instanceof Error ? e.message : String(e)));
                 callbackError(e, callback);
             }
         });
@@ -278,4 +278,3 @@ export class DockerSocketHandler extends AgentSocketHandler {
     }
 
 }
-

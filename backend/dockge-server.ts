@@ -17,10 +17,11 @@ import { SocketHandler } from "./socket-handler";
 import { Settings } from "./settings";
 import checkVersion from "./check-version";
 import dayjs from "dayjs";
-import { R } from "redbean-node";
+import { db } from "./db/knex";
+import { SettingRepo } from "./repositories/setting-repo";
 import { genSecret, isDev, LooseObject } from "../common/util-common";
 import { generatePasswordHash } from "./password-hash";
-import { Bean } from "redbean-node/dist/bean";
+
 import { Arguments, Config, DockgeSocket } from "./util-server";
 import { DockerSocketHandler } from "./agent-socket-handlers/docker-socket-handler";
 import expressStaticGzip from "express-static-gzip";
@@ -31,6 +32,7 @@ import { Stack } from "./stack";
 import { Cron } from "croner";
 import gracefulShutdown from "http-graceful-shutdown";
 import User from "./models/user";
+import { UserRepo } from "./repositories/user-repo";
 import { AgentManager } from "./agent-manager";
 import { AgentProxySocketHandler } from "./socket-handlers/agent-proxy-socket-handler";
 import { AgentSocketHandler } from "./agent-socket-handler";
@@ -304,7 +306,10 @@ export class DockgeServer {
             log.debug("auth", "check auto login");
             if (await Settings.get("disableAuth")) {
                 log.info("auth", "Disabled Auth: auto login to admin");
-                this.afterLogin(dockgeSocket, await R.findOne("user") as User);
+                const row = await UserRepo.getFirstUser();
+                if (row) {
+                    this.afterLogin(dockgeSocket, row as unknown as User);
+                }
                 dockgeSocket.emit("autoLogin");
             } else {
                 log.debug("auth", "need auth");
@@ -365,21 +370,29 @@ export class DockgeServer {
         }
 
         // First time setup if needed
-        let jwtSecretBean = await R.findOne("setting", " `key` = ? ", [
-            "jwtSecret",
-        ]);
+        const existingSecret = await SettingRepo.getValueByKey("jwtSecret");
 
-        if (! jwtSecretBean) {
+        const normalizeJwtSecret = (raw: string) => {
+            try {
+                const parsed = JSON.parse(raw);
+                return typeof parsed === "string" ? parsed : raw;
+            } catch {
+                return raw;
+            }
+        };
+
+        if (!existingSecret) {
             log.info("server", "JWT secret is not found, generate one.");
-            jwtSecretBean = await this.initJWTSecret();
+            const newSecret = generatePasswordHash(genSecret());
+            await SettingRepo.set("jwtSecret", newSecret, null);
+            this.jwtSecret = newSecret;
             log.info("server", "Stored JWT secret into database");
         } else {
             log.debug("server", "Load JWT secret from database.");
+            this.jwtSecret = normalizeJwtSecret(existingSecret);
         }
 
-        this.jwtSecret = jwtSecretBean.value;
-
-        const userCount = (await R.knex("user").count("id as count").first()).count;
+        const userCount = Number((await db("user").count("id as count").first())?.count);
 
         log.debug("server", "User count: " + userCount);
 
@@ -591,19 +604,9 @@ export class DockgeServer {
      * Init or reset JWT secret
      * @returns  JWT secret
      */
-    async initJWTSecret() : Promise<Bean> {
-        let jwtSecretBean = await R.findOne("setting", " `key` = ? ", [
-            "jwtSecret",
-        ]);
-
-        if (!jwtSecretBean) {
-            jwtSecretBean = R.dispense("setting");
-            jwtSecretBean.key = "jwtSecret";
-        }
-
-        jwtSecretBean.value = generatePasswordHash(genSecret());
-        await R.store(jwtSecretBean);
-        return jwtSecretBean;
+    async initJWTSecret() : Promise<void> {
+        const value = generatePasswordHash(genSecret());
+        await SettingRepo.set("jwtSecret", value, null);
     }
 
     /**

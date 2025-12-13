@@ -1,9 +1,10 @@
 import { log } from "./log";
-import { R } from "redbean-node";
 import { DockgeServer } from "./dockge-server";
 import fs from "fs";
 import path from "path";
 import knex from "knex";
+import type { Knex } from "knex";
+import { db, setDb, getDb } from "./db/knex";
 
 // @ts-ignore
 import Dialect from "knex/lib/dialects/sqlite3/index.js";
@@ -86,7 +87,7 @@ export class Database {
      * @param {boolean} noLog Should logs not be output?
      * @returns {Promise<void>}
      */
-    static async connect(autoloadModels = true) {
+    static async connect() {
         const acquireConnectionTimeout = 120 * 1000;
         let dbConfig : DBConfig;
         try {
@@ -130,21 +131,8 @@ export class Database {
             throw new Error("Unknown Database type: " + dbConfig.type);
         }
 
-        const knexInstance = knex(config);
-
-        // @ts-ignore
-        R.setup(knexInstance);
-
-        if (process.env.SQL_LOG === "1") {
-            R.debug(true);
-        }
-
-        // Auto map the model to a bean object
-        R.freeze(true);
-
-        if (autoloadModels) {
-            R.autoloadModels("./backend/models", "ts");
-        }
+        const knexInstance = knex(config) as Knex;
+        setDb(knexInstance);
 
         if (dbConfig.type === "sqlite") {
             await this.initSQLite();
@@ -155,21 +143,33 @@ export class Database {
      @returns {Promise<void>}
      */
     static async initSQLite() {
-        await R.exec("PRAGMA foreign_keys = ON");
+        await db.raw("PRAGMA foreign_keys = ON");
         // Change to WAL
-        await R.exec("PRAGMA journal_mode = WAL");
-        await R.exec("PRAGMA cache_size = -12000");
-        await R.exec("PRAGMA auto_vacuum = INCREMENTAL");
+        await db.raw("PRAGMA journal_mode = WAL");
+        await db.raw("PRAGMA cache_size = -12000");
+        await db.raw("PRAGMA auto_vacuum = INCREMENTAL");
 
         // This ensures that an operating system crash or power failure will not corrupt the database.
         // FULL synchronous is very safe, but it is also slower.
         // Read more: https://sqlite.org/pragma.html#pragma_synchronous
-        await R.exec("PRAGMA synchronous = NORMAL");
+        await db.raw("PRAGMA synchronous = NORMAL");
 
         log.debug("db", "SQLite config:");
-        log.debug("db", await R.getAll("PRAGMA journal_mode"));
-        log.debug("db", await R.getAll("PRAGMA cache_size"));
-        log.debug("db", "SQLite Version: " + await R.getCell("SELECT sqlite_version()"));
+        log.debug("db", await db.raw("PRAGMA journal_mode"));
+        log.debug("db", await db.raw("PRAGMA cache_size"));
+        const versionRows = await db.raw("SELECT sqlite_version() as v");
+        let version : unknown = versionRows;
+        if (Array.isArray(versionRows)) {
+            const first = versionRows[0] as unknown;
+            if (Array.isArray(first)) {
+                version = (first[0] as { v: string }).v;
+            } else if (first && typeof first === "object" && "rows" in (first as Record<string, unknown>)) {
+                version = ((first as { rows: { v: string }[] }).rows[0]).v;
+            } else {
+                version = (first as { v: string }).v;
+            }
+        }
+        log.debug("db", "SQLite Version: " + version);
     }
 
     /**
@@ -181,7 +181,7 @@ export class Database {
         // https://knexjs.org/guide/migrations.html
         // https://gist.github.com/NigelEarle/70db130cc040cc2868555b29a0278261
         try {
-            await R.knex.migrate.latest({
+            await getDb().migrate.latest({
                 directory: Database.knexMigrationsPath,
             });
         } catch (e) {
@@ -212,12 +212,12 @@ export class Database {
 
         // Flush WAL to main database
         if (Database.dbConfig.type === "sqlite") {
-            await R.exec("PRAGMA wal_checkpoint(TRUNCATE)");
+            await db.raw("PRAGMA wal_checkpoint(TRUNCATE)");
         }
 
         while (true) {
             Database.noReject = true;
-            await R.close();
+            await getDb().destroy();
             await sleep(2000);
 
             if (Database.noReject) {
@@ -251,7 +251,7 @@ export class Database {
      */
     static async shrink() {
         if (Database.dbConfig.type === "sqlite") {
-            await R.exec("VACUUM");
+            await db.raw("VACUUM");
         }
     }
 

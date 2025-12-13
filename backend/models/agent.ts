@@ -1,13 +1,24 @@
-import { BeanModel } from "redbean-node/dist/bean-model";
-import { R } from "redbean-node";
 import { LooseObject } from "../../common/util-common";
+import { AgentRepo, AgentRow } from "../repositories/agent-repo";
 
-export class Agent extends BeanModel {
+export class Agent {
+    url!: string;
+    username!: string;
+    password!: string;
+
+    static fromRow(row: AgentRow): Agent {
+        const agent = new Agent();
+        agent.url = row.url;
+        agent.username = row.username;
+        agent.password = row.password;
+        return agent;
+    }
 
     static async getAgentList() : Promise<Record<string, Agent>> {
-        let list = await R.findAll("agent") as Agent[];
-        let result : Record<string, Agent> = {};
-        for (let agent of list) {
+        const rows = await AgentRepo.list();
+        const result : Record<string, Agent> = {};
+        for (const row of rows) {
+            const agent = Agent.fromRow(row);
             result[agent.endpoint] = agent;
         }
         return result;

@@ -213,9 +213,9 @@
                         </div>
 
                         <!-- Custom File Editor -->
-                        <CustomFileEditor 
-                            :stack-name="stack.name" 
-                            :endpoint="endpoint" 
+                        <CustomFileEditor
+                            :stack-name="stack.name"
+                            :endpoint="endpoint"
                             :is-edit-mode="isEditMode"
                         />
                     </div>
@@ -816,7 +816,7 @@ export default {
     font-size: 14px;
     &.edit-mode {
         background-color: $dark-bg2 !important; // 默认深色背景
-        
+
         // 浅色模式下的样式
         body:not(.dark) & {
             background-color: $light-bg2 !important;

@@ -1,7 +1,7 @@
 import { Database } from "../backend/database";
-import { R } from "redbean-node";
-import readline from "readline";
 import { User } from "../backend/models/user";
+import { UserRepo } from "../backend/repositories/user-repo";
+import readline from "readline";
 import { DockgeServer } from "../backend/dockge-server";
 import { log } from "../backend/log";
 import { io } from "socket.io-client";
@@ -31,7 +31,8 @@ export const main = async () => {
     try {
         // No need to actually reset the password for testing, just make sure no connection problem. It is ok for now.
         if (!process.env.TEST_BACKEND) {
-            const user = await R.findOne("user");
+            const row = await UserRepo.getFirstUser();
+            const user = row as unknown as User;
             if (! user) {
                 throw new Error("user not found, have you installed?");
             }

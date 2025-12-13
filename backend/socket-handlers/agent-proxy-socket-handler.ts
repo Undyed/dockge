@@ -23,10 +23,10 @@ export class AgentProxySocketHandler extends SocketHandler {
 
                 if (endpoint === ALL_ENDPOINTS) {      // Send to all endpoints
                     log.debug("agent", "Sending to all endpoints: " + eventName);
-                    
+
                     // First handle the current endpoint
                     agentSocket.call(eventName, ...args);
-                    
+
                     // Then send to all other endpoints (without callback)
                     const argsWithoutCallback = args.slice(0, -1); // Remove the last argument (callback)
                     socket.instanceManager.emitToAllEndpoints(eventName, ...argsWithoutCallback);

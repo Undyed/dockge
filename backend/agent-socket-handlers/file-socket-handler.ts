@@ -116,13 +116,13 @@ export class FileSocketHandler extends AgentSocketHandler {
                 // Read directory contents
                 const files = await fs.readdir(stackDir);
                 log.debug("file-socket-handler", `Found ${files.length} items in directory`);
-                
+
                 // Filter text files and get file info
                 const fileList = [];
                 for (const file of files) {
                     const filePath = path.join(stackDir, file);
                     const stats = await fs.stat(filePath);
-                    
+
                     if (stats.isFile()) {
                         fileList.push({
                             name: file,

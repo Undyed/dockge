@@ -96,5 +96,6 @@ module.exports = {
             "args": "none"
         }],
         "prefer-const" : "off",
+        "@typescript-eslint/no-explicit-any": "error",
     },
 };

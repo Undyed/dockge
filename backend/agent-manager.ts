@@ -4,7 +4,7 @@ import { log } from "./log";
 import { Agent } from "./models/agent";
 import { isDev, LooseObject, sleep } from "../common/util-common";
 import semver from "semver";
-import { R } from "redbean-node";
+import { AgentRepo } from "./repositories/agent-repo";
 import dayjs, { Dayjs } from "dayjs";
 
 /**
@@ -78,12 +78,8 @@ export class AgentManager {
      * @param password
      */
     async add(url : string, username : string, password : string) : Promise<Agent> {
-        let bean = R.dispense("agent") as Agent;
-        bean.url = url;
-        bean.username = username;
-        bean.password = password;
-        await R.store(bean);
-        return bean;
+        const row = await AgentRepo.create(url, username, password);
+        return Agent.fromRow(row);
     }
 
     /**
@@ -91,13 +87,10 @@ export class AgentManager {
      * @param url
      */
     async remove(url : string) {
-        let bean = await R.findOne("agent", " url = ? ", [
-            url,
-        ]);
-
-        if (bean) {
-            await R.trash(bean);
-            let endpoint = bean.endpoint;
+        const row = await AgentRepo.getByUrl(url);
+        if (row) {
+            const endpoint = (new URL(row.url)).host;
+            await AgentRepo.removeByUrl(url);
             this.disconnect(endpoint);
             this.sendAgentList();
             delete this.agentSocketList[endpoint];
