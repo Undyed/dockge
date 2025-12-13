@@ -10,19 +10,19 @@
                     <select v-model="selectedFile" class="form-select" @change="loadSelectedFile">
                         <option value="">{{ $t("selectFile") }}</option>
                         <option v-for="file in fileList" :key="file.name" :value="file.name">
-                            {{ file.name }}
+                            {{ file.name }}{{ file.size ? " (" + formatFileSize(file.size) + ")" : "" }}
                         </option>
                     </select>
                     <button class="btn btn-secondary" @click="showCustomInput = !showCustomInput">
                         <font-awesome-icon icon="keyboard" class="me-1" />
                         {{ $t("manual") }}
                     </button>
-                    <button class="btn btn-primary" :disabled="!selectedFile" @click="loadFile">
-                        <font-awesome-icon icon="edit" class="me-1" />
+                    <button class="btn btn-primary" :disabled="!selectedFile || isLoading" @click="loadFile">
+                        <font-awesome-icon :icon="isLoading ? 'spinner' : 'edit'" :spin="isLoading" class="me-1" />
                         {{ $t("edit") }}
                     </button>
-                    <button class="btn btn-secondary" @click="loadFileList">
-                        <font-awesome-icon icon="arrows-rotate" class="me-1" />
+                    <button class="btn btn-secondary" :disabled="isLoading" @click="loadFileList">
+                        <font-awesome-icon :icon="isLoading ? 'spinner' : 'arrows-rotate'" :spin="isLoading" class="me-1" />
                         {{ $t("refresh") }}
                     </button>
                 </div>
@@ -37,14 +37,15 @@
                         type="text"
                         class="form-control"
                         :placeholder="$t('enterFilePath')"
+                        :disabled="isLoading"
                         @keyup.enter="loadCustomFile"
                     />
-                    <button class="btn btn-success" :disabled="!customFilePath" @click="createNewFile">
+                    <button class="btn btn-success" :disabled="!customFilePath || isLoading" @click="createNewFile">
                         <font-awesome-icon icon="plus" class="me-1" />
                         {{ $t("create") }}
                     </button>
-                    <button class="btn btn-primary" :disabled="!customFilePath" @click="loadCustomFile">
-                        <font-awesome-icon icon="edit" class="me-1" />
+                    <button class="btn btn-primary" :disabled="!customFilePath || isLoading" @click="loadCustomFile">
+                        <font-awesome-icon :icon="isLoading ? 'spinner' : 'edit'" :spin="isLoading" class="me-1" />
                         {{ $t("edit") }}
                     </button>
                 </div>
@@ -63,11 +64,33 @@
             @cancel="closeFile"
         >
             <div v-if="currentFile" class="file-editor-modal">
-                <div class="mb-3">
-                    <strong>{{ $t("file") }}:</strong> {{ currentFile }}
+                <div class="mb-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ $t("file") }}:</strong> {{ currentFile }}
+                        <span v-if="fileSize" class="text-muted ms-2">({{ formatFileSize(fileSize) }})</span>
+                    </div>
+                    <div v-if="isLargeFile" class="text-warning">
+                        <font-awesome-icon icon="exclamation-circle" class="me-1" />
+                        {{ $t("largeFileWarning") }}
+                    </div>
                 </div>
-                <div class="editor-container">
+
+                <!-- Loading indicator -->
+                <div v-if="isLoading" class="text-center py-5">
+                    <font-awesome-icon icon="spinner" spin size="2x" />
+                    <p class="mt-3">{{ $t("loading") }}...</p>
+                </div>
+
+                <!-- Editor -->
+                <div v-else class="editor-container">
+                    <textarea
+                        v-if="usePlainTextEditor"
+                        v-model="fileContent"
+                        class="plain-text-editor"
+                        spellcheck="false"
+                    ></textarea>
                     <prism-editor
+                        v-else
                         v-model="fileContent"
                         class="file-editor"
                         :highlight="highlighterText"
@@ -119,7 +142,20 @@ export default {
             currentFile: "",
             fileContent: "",
             showEditor: false,
+            isLoading: false,
+            fileSize: 0,
+            highlightDebounceTimer: null,
         };
+    },
+    computed: {
+        // 文件大小超过 500KB 视为大文件
+        isLargeFile() {
+            return this.fileSize > 500 * 1024;
+        },
+        // 文件大小超过 1MB 使用纯文本编辑器
+        usePlainTextEditor() {
+            return this.fileSize > 1024 * 1024;
+        },
     },
     watch: {
         isEditMode(newVal) {
@@ -155,8 +191,10 @@ export default {
             }
 
             console.log("Loading file list for stack:", this.stackName, "endpoint:", this.endpoint);
+            this.isLoading = true;
             this.$root.emitAgent(this.endpoint, "listStackFiles", this.stackName, (res) => {
                 console.log("File list response:", res);
+                this.isLoading = false;
                 if (res.ok) {
                     this.fileList = res.files || [];
                     console.log("File list loaded:", this.fileList);
@@ -188,14 +226,27 @@ export default {
             }
 
             console.log("Loading file:", filePath, "for stack:", this.stackName);
+            this.isLoading = true;
+
             this.$root.emitAgent(this.endpoint, "readCustomFile", this.stackName, filePath, (res) => {
                 console.log("Read file response:", res);
+                this.isLoading = false;
+
                 if (res.ok) {
                     this.currentFile = res.filePath;
                     this.fileContent = res.content;
                     this.selectedFile = res.filePath;
+                    this.fileSize = res.size || new Blob([res.content]).size;
                     this.showEditor = true;
-                    console.log("File loaded successfully:", this.currentFile);
+
+                    // 大文件警告
+                    if (this.usePlainTextEditor) {
+                        this.$root.toastWarning(this.$t("largeFileUsePlainEditor"));
+                    } else if (this.isLargeFile) {
+                        this.$root.toastWarning(this.$t("largeFileWarning"));
+                    }
+
+                    console.log("File loaded successfully:", this.currentFile, "Size:", this.fileSize);
                 } else {
                     this.$root.toastRes(res);
                 }
@@ -235,11 +286,48 @@ export default {
             this.fileContent = "";
             this.selectedFile = "";
             this.customFilePath = "";
+            this.fileSize = 0;
+            this.isLoading = false;
+
+            // 清理防抖定时器
+            if (this.highlightDebounceTimer) {
+                clearTimeout(this.highlightDebounceTimer);
+                this.highlightDebounceTimer = null;
+            }
+        },
+
+        formatFileSize(bytes) {
+            if (bytes === 0) return "0 B";
+            const k = 1024;
+            const sizes = ["B", "KB", "MB", "GB"];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + " " + sizes[i];
         },
 
         highlighterText(code) {
-            // Simple text highlighting
-            return highlight(code, languages.javascript || languages.clike);
+            // 对于大文件，禁用语法高亮以提升性能
+            if (this.usePlainTextEditor) {
+                return code;
+            }
+
+            // 使用防抖优化语法高亮性能
+            if (this.isLargeFile) {
+                // 对于较大文件，简化高亮逻辑
+                try {
+                    return highlight(code, languages.clike);
+                } catch (e) {
+                    console.warn("Syntax highlighting failed:", e);
+                    return code;
+                }
+            }
+
+            // 正常文件使用完整的语法高亮
+            try {
+                return highlight(code, languages.javascript || languages.clike);
+            } catch (e) {
+                console.warn("Syntax highlighting failed:", e);
+                return code;
+            }
         },
     },
 };
@@ -269,6 +357,35 @@ export default {
             min-height: 400px;
             max-height: 600px;
             overflow-y: auto;
+        }
+
+        .plain-text-editor {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            min-height: 400px;
+            max-height: 600px;
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            outline: none;
+            resize: vertical;
+            background-color: $dark-bg2;
+            color: $dark-font-color;
+            line-height: 1.5;
+            tab-size: 4;
+            white-space: pre;
+            overflow-wrap: normal;
+            overflow-x: auto;
+
+            // 浅色模式下的样式
+            body:not(.dark) & {
+                background-color: $light-bg2;
+                color: $light-font-color;
+            }
+
+            &:focus {
+                outline: none;
+            }
         }
     }
 }

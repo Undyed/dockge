@@ -4,6 +4,7 @@ import { callbackError, callbackResult, checkLogin, DockgeSocket, ValidationErro
 import { AgentSocket } from "../../common/agent-socket";
 import { log } from "../log";
 import fs from "fs/promises";
+import type { Stats } from "fs";
 import path from "path";
 
 export class FileSocketHandler extends AgentSocketHandler {
@@ -41,9 +42,10 @@ export class FileSocketHandler extends AgentSocketHandler {
                 const stackDir = resolveStackDir(stackName);
                 const resolvedPath = resolveStackFilePath(stackDir, filePath);
 
-                // Check if file exists
+                // Check if file exists and get stats
+                let stats: Stats;
                 try {
-                    await fs.access(resolvedPath);
+                    stats = await fs.stat(resolvedPath);
                 } catch (e) {
                     throw new ValidationError("File does not exist");
                 }
@@ -55,6 +57,7 @@ export class FileSocketHandler extends AgentSocketHandler {
                     ok: true,
                     content,
                     filePath,
+                    size: stats.size,
                 }, callback);
             } catch (e) {
                 callbackError(e, callback);

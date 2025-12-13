@@ -154,5 +154,8 @@
     "manual": "Manual",
     "edit": "Edit",
     "fileEditor": "File Editor",
-    "file": "File"
+    "file": "File",
+    "loading": "Loading",
+    "largeFileWarning": "Large file detected. Performance may be affected.",
+    "largeFileUsePlainEditor": "File is too large. Using plain text editor for better performance."
 }
