@@ -17,37 +17,6 @@
             max-width: 500px;
             margin: 0 auto;
         }
-
-        /* 浅色主题光标和选中高亮 - 最高优先级 */
-
-        /* 普通输入框 */
-        body.light input,
-        body.light textarea:not(.prism-editor__textarea),
-        body.light .form-control,
-        body:not(.dark) input,
-        body:not(.dark) textarea:not(.prism-editor__textarea),
-        body:not(.dark) .form-control {
-            caret-color: #0066cc !important;
-        }
-
-        /* Prism Editor textarea - 关键修复 */
-        body.light .prism-editor__textarea,
-        body:not(.dark) .prism-editor__textarea {
-            caret-color: #0066cc !important;
-            /* 确保光标可见 - 不要设置 color: transparent */
-        }
-
-        /* 全局选中高亮 */
-        body.light ::selection,
-        body:not(.dark) ::selection {
-            background-color: rgba(0, 102, 204, 0.35) !important;
-        }
-
-        /* Prism Editor 选中高亮 */
-        body.light .prism-editor__textarea::selection,
-        body:not(.dark) .prism-editor__textarea::selection {
-            background-color: rgba(0, 102, 204, 0.4) !important;
-        }
     </style>
 </head>
 <body>

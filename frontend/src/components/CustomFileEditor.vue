@@ -89,14 +89,12 @@
                         class="plain-text-editor"
                         spellcheck="false"
                     ></textarea>
-                    <prism-editor
+                    <CodeEditor
                         v-else
                         v-model="fileContent"
-                        class="file-editor"
-                        :highlight="highlighterText"
-                        line-numbers
-                        :auto-style-line-numbers="false"
-                    ></prism-editor>
+                        language="javascript"
+                        height="500px"
+                    />
                 </div>
             </div>
         </BModal>
@@ -104,21 +102,16 @@
 </template>
 
 <script>
-import { PrismEditor } from "vue-prism-editor";
-import { highlight, languages } from "prismjs/components/prism-core";
-import "prismjs/components/prism-clike";
-import "prismjs/components/prism-javascript";
-import "prismjs/themes/prism-tomorrow.css";
-import "vue-prism-editor/dist/prismeditor.min.css";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { BModal } from "bootstrap-vue-next";
+import CodeEditor from "./CodeEditor.vue";
 
 export default {
     name: "CustomFileEditor",
     components: {
-        PrismEditor,
         FontAwesomeIcon,
         BModal,
+        CodeEditor,
     },
     props: {
         stackName: {
@@ -304,32 +297,6 @@ export default {
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return Math.round(bytes / Math.pow(k, i) * 100) / 100 + " " + sizes[i];
         },
-
-        highlighterText(code) {
-            // 对于大文件，禁用语法高亮以提升性能
-            if (this.usePlainTextEditor) {
-                return code;
-            }
-
-            // 使用防抖优化语法高亮性能
-            if (this.isLargeFile) {
-                // 对于较大文件，简化高亮逻辑
-                try {
-                    return highlight(code, languages.clike);
-                } catch (e) {
-                    console.warn("Syntax highlighting failed:", e);
-                    return code;
-                }
-            }
-
-            // 正常文件使用完整的语法高亮
-            try {
-                return highlight(code, languages.javascript || languages.clike);
-            } catch (e) {
-                console.warn("Syntax highlighting failed:", e);
-                return code;
-            }
-        },
     },
 };
 </script>
@@ -398,81 +365,5 @@ export default {
 
 :deep(.modal-body) {
     padding: 1rem;
-}
-</style>
-
-<!-- 非 scoped 样式，用于覆盖 prism-tomorrow.css 在浅色主题下的样式 -->
-<style lang="scss">
-@import "../styles/vars.scss";
-
-body:not(.dark) {
-    .custom-file-editor {
-        // Prism Editor 选中高亮
-        .prism-editor-wrapper .prism-editor__textarea::selection {
-            background-color: rgba(0, 102, 204, 0.35) !important;
-        }
-
-        .prism-editor-wrapper .prism-editor__textarea::-moz-selection {
-            background-color: rgba(0, 102, 204, 0.35) !important;
-        }
-
-        // Prism Editor 光标 - 深蓝色
-        .prism-editor-wrapper .prism-editor__textarea {
-            caret-color: #0066cc !important;
-        }
-
-        // 语法高亮颜色 - 覆盖 prism-tomorrow.css
-        .prism-editor__editor {
-            .token.comment,
-            .token.block-comment,
-            .token.prolog,
-            .token.doctype,
-            .token.cdata {
-                color: #6a737d !important;
-            }
-
-            .token.punctuation {
-                color: #5a6c7d !important;
-            }
-
-            .token.property,
-            .token.tag,
-            .token.boolean,
-            .token.number,
-            .token.constant,
-            .token.symbol {
-                color: #c7254e !important;
-            }
-
-            .token.selector,
-            .token.attr-name,
-            .token.string,
-            .token.char,
-            .token.builtin {
-                color: #0d7377 !important;
-            }
-
-            .token.operator,
-            .token.entity,
-            .token.url {
-                color: #6f42c1 !important;
-            }
-
-            .token.atrule,
-            .token.attr-value,
-            .token.keyword {
-                color: #d73a49 !important;
-            }
-
-            .token.function,
-            .token.class-name {
-                color: #6f42c1 !important;
-            }
-
-            .token.variable {
-                color: #e36209 !important;
-            }
-        }
-    }
 }
 </style>

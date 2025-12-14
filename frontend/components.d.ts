@@ -14,6 +14,7 @@ declare module 'vue' {
     BDropdown: typeof import('bootstrap-vue-next')['BDropdown']
     BDropdownItem: typeof import('bootstrap-vue-next')['BDropdownItem']
     BModal: typeof import('bootstrap-vue-next')['BModal']
+    CodeEditor: typeof import('./src/components/CodeEditor.vue')['default']
     Confirm: typeof import('./src/components/Confirm.vue')['default']
     Container: typeof import('./src/components/Container.vue')['default']
     CustomFileEditor: typeof import('./src/components/CustomFileEditor.vue')['default']
