@@ -6,10 +6,10 @@ data
 stacks
 tmp
 /private
+frontend-dist
 
 # Docker extra
 docker
-frontend
 .editorconfig
 .eslintrc.cjs
 .git

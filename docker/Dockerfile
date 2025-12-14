@@ -1,27 +1,64 @@
 ############################################
 # Healthcheck Binary
 ############################################
-FROM louislam/dockge:build-healthcheck AS build_healthcheck
+FROM golang:1.21.4-bookworm AS build_healthcheck
+WORKDIR /app
+COPY ./extra/healthcheck.go ./extra/healthcheck.go
+RUN go build -x -o ./extra/healthcheck ./extra/healthcheck.go
 
 ############################################
-# Build
+# Frontend Build
 ############################################
-FROM louislam/dockge:base AS build
+FROM node:22-bookworm AS build_frontend
 WORKDIR /app
-COPY --chown=node:node  ./package.json ./package.json
-COPY --chown=node:node  ./package-lock.json ./package-lock.json
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY . .
+RUN npm run build:frontend
+
+############################################
+# Backend Dependencies
+############################################
+FROM node:22-bookworm-slim AS build_backend
+WORKDIR /app
+COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
 ############################################
 # ⭐ Main Image
 ############################################
-FROM louislam/dockge:base AS release
+FROM node:22-bookworm-slim AS release
 WORKDIR /app
-COPY --chown=node:node --from=build_healthcheck /app/extra/healthcheck /app/extra/healthcheck
-COPY --from=build /app/node_modules /app/node_modules
-COPY --chown=node:node  . .
-RUN mkdir ./data
 
+# Install dependencies (from Base.Dockerfile)
+RUN apt-get update && apt-get install --yes --no-install-recommends \
+    curl \
+    ca-certificates \
+    gnupg \
+    unzip \
+    dumb-init \
+    && install -m 0755 -d /etc/apt/keyrings \
+    && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg \
+    && chmod a+r /etc/apt/keyrings/docker.gpg \
+    && echo \
+         "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
+         "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
+         tee /etc/apt/sources.list.d/docker.list > /dev/null \
+    && apt-get update \
+    && apt-get --yes --no-install-recommends install \
+         docker-ce-cli \
+         docker-compose-plugin \
+    && rm -rf /var/lib/apt/lists/* \
+    && npm install -g tsx@~4.19.3
+
+# Copy built artifacts
+COPY --chown=node:node --from=build_healthcheck /app/extra/healthcheck /app/extra/healthcheck
+COPY --from=build_backend /app/node_modules /app/node_modules
+COPY --from=build_frontend /app/frontend-dist /app/frontend-dist
+COPY --chown=node:node . .
+
+# Remove unnecessary files for production
+RUN rm -rf frontend node_modules/.cache && mkdir ./data
 
 # It is just for safe, as by default, it is disabled in the latest Node.js now.
 # Read more:
