@@ -19,6 +19,11 @@ export interface DockgeSocket extends Socket {
     instanceManager : AgentManager;
     endpoint : string;
     emitAgent : (eventName : string, ...args : unknown[]) => void;
+    /**
+     * 前端在 Socket.IO 握手阶段上报的能力标记（可选）。
+     * 用于在 subscription-mode 下避免旧的 join 推流造成重复数据。
+     */
+    clientFeatures?: string[];
 }
 
 // For command line arguments, so they are nullable

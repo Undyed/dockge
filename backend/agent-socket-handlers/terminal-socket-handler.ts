@@ -60,7 +60,10 @@ export class TerminalSocketHandler extends AgentSocketHandler {
                     log.debug("mainTerminal", "Terminal created");
                 }
 
-                terminal.join(socket);
+                // subscription-mode 下，前端通过 subscribeTerminal 获取输出，避免重复推流
+                if (!socket.clientFeatures?.includes("subscription-mode")) {
+                    terminal.join(socket);
+                }
                 terminal.start();
 
                 callbackResult({

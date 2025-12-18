@@ -10,6 +10,7 @@ import {
 } from "../common/util-common";
 import { sync as commandExistsSync } from "command-exists";
 import { log } from "./log";
+import { EventPublisher } from "./event-publisher";
 
 /**
  * Terminal for running commands, no user interaction
@@ -35,6 +36,8 @@ export class Terminal {
     protected kickDisconnectedClientsInterval? : NodeJS.Timeout;
 
     protected socketList : Record<string, DockgeSocket> = {};
+    protected eventPublisher : EventPublisher;
+    protected topicName : string;
 
     constructor(server : DockgeServer, name : string, file : string, args : string | string[], cwd : string) {
         this.server = server;
@@ -43,6 +46,8 @@ export class Terminal {
         this.file = file;
         this.args = args;
         this.cwd = cwd;
+        this.topicName = `terminal:${name}`;
+        this.eventPublisher = EventPublisher.getInstance();
 
         Terminal.terminalMap.set(this.name, this);
     }
@@ -98,7 +103,9 @@ export class Terminal {
 
             // Close if there is no clients
             this.keepAliveInterval = setInterval(() => {
-                const numClients = Object.keys(this.socketList).length;
+                const numJoinedClients = Object.keys(this.socketList).length;
+                const numSubscribedClients = this.eventPublisher.getActiveSubscriberCount(this.topicName);
+                const numClients = Math.max(numJoinedClients, numSubscribedClients);
 
                 if (numClients === 0) {
                     log.debug("Terminal", "Terminal " + this.name + " has no client, closing...");
@@ -126,6 +133,14 @@ export class Terminal {
                 for (const socketID in this.socketList) {
                     const socket = this.socketList[socketID];
                     socket.emitAgent("terminalWrite", this.name, data);
+                }
+
+                // subscription-mode: 只在有订阅者时才发布，避免无意义的性能开销
+                if (this.eventPublisher.hasActiveSubscribers(this.topicName)) {
+                    this.eventPublisher.publish(this.topicName, "terminalWrite", {
+                        terminalName: this.name,
+                        data,
+                    });
                 }
             });
 
@@ -233,7 +248,10 @@ export class Terminal {
             terminal.rows = PROGRESS_TERMINAL_ROWS;
 
             if (socket) {
-                terminal.join(socket);
+                // subscription-mode 下，前端通过 subscribeTerminal 获取输出，避免重复推流
+                if (!socket.clientFeatures?.includes("subscription-mode")) {
+                    terminal.join(socket);
+                }
             }
 
             terminal.onExit((exitCode : number) => {

@@ -40,6 +40,7 @@ import { AgentSocket } from "../common/agent-socket";
 import { ManageAgentSocketHandler } from "./socket-handlers/manage-agent-socket-handler";
 import { Terminal } from "./terminal";
 import { DockerClient } from "./docker-client";
+import type { SubscriptionIntegration } from "./subscription-integration";
 
 export class DockgeServer {
     app : Express;
@@ -74,6 +75,12 @@ export class DockgeServer {
         new TerminalSocketHandler(),
         new FileSocketHandler(),
     ];
+
+    /**
+     * 订阅模式相关
+     */
+    subscriptionIntegration?: SubscriptionIntegration;
+    info: LooseObject = {};
 
     /**
      * Show Setup Page
@@ -264,6 +271,18 @@ export class DockgeServer {
                 dockgeSocket.emit("agent", event, ...args);
             };
 
+            // 前端在握手阶段上报的能力标记（可选）
+            const rawClientFeatures: unknown = (socket.handshake as unknown as {
+                auth?: {
+                    clientFeatures?: unknown;
+                };
+            })?.auth?.clientFeatures;
+            if (Array.isArray(rawClientFeatures)) {
+                dockgeSocket.clientFeatures = rawClientFeatures.filter((x) => typeof x === "string");
+            } else if (typeof rawClientFeatures === "string") {
+                dockgeSocket.clientFeatures = [ rawClientFeatures ];
+            }
+
             if (typeof(socket.request.headers.endpoint) === "string") {
                 dockgeSocket.endpoint = socket.request.headers.endpoint;
             } else {
@@ -402,6 +421,9 @@ export class DockgeServer {
             this.needSetup = true;
         }
 
+        // 初始化订阅模式
+        await this.initSubscriptionMode();
+
         // Listen
         this.httpServer.listen(this.config.port, this.config.hostname, () => {
             if (this.config.hostname) {
@@ -433,6 +455,25 @@ export class DockgeServer {
     }
 
     /**
+     * 初始化订阅模式（可选能力，失败不应阻塞启动）
+     */
+    private async initSubscriptionMode() {
+        try {
+            const { SubscriptionIntegration } = await import("./subscription-integration");
+
+            // 保存引用，便于后续扩展/关闭
+            this.subscriptionIntegration = SubscriptionIntegration.getInstance();
+            this.subscriptionIntegration.enable(this);
+        } catch (e) {
+            if (e instanceof Error) {
+                log.warn("server", `Failed to init subscription mode: ${e.message}`);
+            } else {
+                log.warn("server", "Failed to init subscription mode");
+            }
+        }
+    }
+
+    /**
      * Emits the version information to the client.
      * @param socket Socket.io socket instance
      * @param hideVersion Should we hide the version information in the response?
@@ -449,13 +490,22 @@ export class DockgeServer {
             isContainer = (process.env.DOCKGE_IS_CONTAINER === "1");
         }
 
-        socket.emit("info", {
+        const serverInfo : LooseObject = {
             version: versionProperty,
             latestVersion: latestVersionProperty,
             isContainer,
             primaryHostname: await Settings.get("primaryHostname"),
-            //serverTimezone: await this.getTimezone(),
             //serverTimezoneOffset: this.getTimezoneOffset(),
+        };
+
+        // 合并服务器信息和特性（例如 subscription-mode）
+        const extraInfo = this.info ?? {};
+        const features = Array.isArray(extraInfo.features) ? extraInfo.features : [];
+
+        socket.emit("info", {
+            ...serverInfo,
+            ...extraInfo,
+            features,
         });
     }
 
