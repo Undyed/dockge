@@ -43,24 +43,24 @@ import { DockerClient } from "./docker-client";
 import type { SubscriptionIntegration } from "./subscription-integration";
 
 export class DockgeServer {
-    app : Express;
-    httpServer : http.Server;
-    packageJSON : PackageJson;
-    io : socketIO.Server;
-    config : Config;
-    indexHTML : string = "";
+    app: Express;
+    httpServer: http.Server;
+    packageJSON: PackageJson;
+    io: socketIO.Server;
+    config: Config;
+    indexHTML: string = "";
 
     /**
      * List of express routers
      */
-    routerList : Router[] = [
+    routerList: Router[] = [
         new MainRouter(),
     ];
 
     /**
      * List of socket handlers (no agent support)
      */
-    socketHandlerList : SocketHandler[] = [
+    socketHandlerList: SocketHandler[] = [
         new MainSocketHandler(),
         new ManageAgentSocketHandler(),
     ];
@@ -70,7 +70,7 @@ export class DockgeServer {
     /**
      * List of socket handlers (support agent)
      */
-    agentSocketHandlerList : AgentSocketHandler[] = [
+    agentSocketHandlerList: AgentSocketHandler[] = [
         new DockerSocketHandler(),
         new TerminalSocketHandler(),
         new FileSocketHandler(),
@@ -87,16 +87,16 @@ export class DockgeServer {
      */
     needSetup = false;
 
-    jwtSecret : string = "";
+    jwtSecret: string = "";
 
-    stacksDir : string = "";
+    stacksDir: string = "";
 
     /**
      *
      */
     constructor() {
         // Catch unexpected errors here
-        let unexpectedErrorHandler = (error : unknown) => {
+        let unexpectedErrorHandler = (error: unknown) => {
             console.trace(error);
             console.error("If you keep encountering errors, please report to https://github.com/louislam/dockge");
         };
@@ -262,9 +262,9 @@ export class DockgeServer {
         this.io.on("connection", async (socket: Socket) => {
             let dockgeSocket = socket as DockgeSocket;
             dockgeSocket.instanceManager = new AgentManager(dockgeSocket);
-            dockgeSocket.emitAgent = (event : string, ...args : unknown[]) => {
+            dockgeSocket.emitAgent = (event: string, ...args: unknown[]) => {
                 let obj = args[0];
-                if (typeof(obj) === "object") {
+                if (typeof (obj) === "object") {
                     let obj2 = obj as LooseObject;
                     obj2.endpoint = dockgeSocket.endpoint;
                 }
@@ -283,7 +283,7 @@ export class DockgeServer {
                 dockgeSocket.clientFeatures = [ rawClientFeatures ];
             }
 
-            if (typeof(socket.request.headers.endpoint) === "string") {
+            if (typeof (socket.request.headers.endpoint) === "string") {
                 dockgeSocket.endpoint = socket.request.headers.endpoint;
             } else {
                 dockgeSocket.endpoint = "";
@@ -353,7 +353,7 @@ export class DockgeServer {
         }
     }
 
-    async afterLogin(socket : DockgeSocket, user : User) {
+    async afterLogin(socket: DockgeSocket, user: User) {
         socket.userID = user.id;
         socket.join(user.id.toString());
 
@@ -425,15 +425,18 @@ export class DockgeServer {
         await this.initSubscriptionMode();
 
         // Listen
-        this.httpServer.listen(this.config.port, this.config.hostname, () => {
+        this.httpServer.listen(this.config.port, this.config.hostname, async () => {
             if (this.config.hostname) {
-                log.info( "server", `Listening on ${this.config.hostname}:${this.config.port}`);
+                log.info("server", `Listening on ${this.config.hostname}:${this.config.port}`);
             } else {
                 log.info("server", `Listening on ${this.config.port}`);
             }
 
-            // Run every 10 seconds
-            Cron("*/10 * * * * *", {
+            const eventsEnabled = await this.startDockerEventMonitor();
+            const pollingIntervalSeconds = eventsEnabled ? 60 : 10;
+
+            // Poll stack list periodically (faster when Docker events are unavailable)
+            Cron(`*/${pollingIntervalSeconds} * * * * *`, {
                 protect: true,  // Enabled over-run protection.
             }, () => {
                 //log.debug("server", "Cron job running");
@@ -448,8 +451,8 @@ export class DockgeServer {
             timeout: 30000,                   // timeout: 30 secs
             development: false,               // not in dev mode
             forceExit: true,                  // triggers process.exit() at the end of shutdown process
-            onShutdown: this.shutdownFunction,     // shutdown function (async) - e.g. for cleanup DB, ...
-            finally: this.finalFunction,            // finally function (sync) - e.g. for logging
+            onShutdown: (signal) => this.shutdownFunction(signal),     // shutdown function (async) - e.g. for cleanup DB, ...
+            finally: () => this.finalFunction(),            // finally function (sync) - e.g. for logging
         });
 
     }
@@ -479,7 +482,7 @@ export class DockgeServer {
      * @param hideVersion Should we hide the version information in the response?
      * @returns
      */
-    async sendInfo(socket : Socket, hideVersion = false) {
+    async sendInfo(socket: Socket, hideVersion = false) {
         let versionProperty;
         let latestVersionProperty;
         let isContainer;
@@ -490,7 +493,7 @@ export class DockgeServer {
             isContainer = (process.env.DOCKGE_IS_CONTAINER === "1");
         }
 
-        const serverInfo : LooseObject = {
+        const serverInfo: LooseObject = {
             version: versionProperty,
             latestVersion: latestVersionProperty,
             isContainer,
@@ -514,7 +517,7 @@ export class DockgeServer {
      * @param {Socket} socket Socket to query
      * @returns IP of client
      */
-    async getClientIP(socket : Socket) : Promise<string> {
+    async getClientIP(socket: Socket): Promise<string> {
         let clientIP = socket.client.conn.remoteAddress;
 
         if (clientIP === undefined) {
@@ -598,7 +601,7 @@ export class DockgeServer {
      * @returns {void}
      * @throws The timezone is invalid
      */
-    checkTimezone(timezone : string) {
+    checkTimezone(timezone: string) {
         try {
             dayjs.utc("2013-11-18 11:55").tz(timezone).format();
         } catch (e) {
@@ -610,7 +613,7 @@ export class DockgeServer {
      * Initialize the data directory
      */
     initDataDir() {
-        if (! fs.existsSync(this.config.dataDir)) {
+        if (!fs.existsSync(this.config.dataDir)) {
             fs.mkdirSync(this.config.dataDir, { recursive: true });
         }
 
@@ -654,7 +657,7 @@ export class DockgeServer {
      * Init or reset JWT secret
      * @returns  JWT secret
      */
-    async initJWTSecret() : Promise<void> {
+    async initJWTSecret(): Promise<void> {
         const value = generatePasswordHash(genSecret());
         await SettingRepo.set("jwtSecret", value, null);
     }
@@ -663,7 +666,7 @@ export class DockgeServer {
      * Send stack list to all connected sockets
      * @param useCache
      */
-    async sendStackList(useCache = false) {
+    async sendStackList(useCache = false, skipStatusUpdate = false) {
         let socketList = this.io.sockets.sockets.values();
 
         let stackList;
@@ -676,10 +679,10 @@ export class DockgeServer {
 
                 // Get the list only if there is a logged in user
                 if (!stackList) {
-                    stackList = await Stack.getStackList(this, useCache);
+                    stackList = await Stack.getStackList(this, useCache, skipStatusUpdate);
                 }
 
-                let map : Map<string, object> = new Map();
+                let map: Map<string, object> = new Map();
 
                 for (let [ stackName, stack ] of stackList) {
                     map.set(stackName, stack.toSimpleJSON(dockgeSocket.endpoint));
@@ -694,7 +697,7 @@ export class DockgeServer {
         }
     }
 
-    async getDockerNetworkList() : Promise<string[]> {
+    async getDockerNetworkList(): Promise<string[]> {
         const dockerClient = DockerClient.getInstance();
         return await dockerClient.getNetworkList();
     }
@@ -708,9 +711,23 @@ export class DockgeServer {
      * Stops all monitors and closes the database connection.
      * @param signal The signal that triggered this function to be called.
      */
-    async shutdownFunction(signal : string | undefined) {
+    async shutdownFunction(signal: string | undefined) {
         log.info("server", "Shutdown requested");
         log.info("server", "Called signal: " + signal);
+
+        // Clean up Docker event stream
+        this.cleanupDockerEventStream();
+        this.pendingEventProjectNames.clear();
+
+        if (this.eventStatusSyncTimeout) {
+            clearTimeout(this.eventStatusSyncTimeout);
+            this.eventStatusSyncTimeout = null;
+        }
+
+        if (this.dockerEventReconnectTimeout) {
+            clearTimeout(this.dockerEventReconnectTimeout);
+            this.dockerEventReconnectTimeout = null;
+        }
 
         // TODO: Close all terminals?
 
@@ -731,7 +748,7 @@ export class DockgeServer {
      * @param {string} userID
      * @param {string?} currentSocketID
      */
-    disconnectAllSocketClients(userID: number | undefined, currentSocketID? : string) {
+    disconnectAllSocketClients(userID: number | undefined, currentSocketID?: string) {
         for (const rawSocket of this.io.sockets.sockets.values()) {
             let socket = rawSocket as DockgeSocket;
             if ((!userID || socket.userID === userID) && socket.id !== currentSocketID) {
@@ -753,6 +770,193 @@ export class DockgeServer {
         const protocol = this.isSSL() ? "wss" : "ws";
         const host = this.config.hostname || "localhost";
         return `${protocol}://${host}:${this.config.port}`;
+    }
+
+    private dockerEventReconnectAttempts = 0;
+    private readonly maxDockerEventReconnectAttempts = 10;
+    private dockerEventStream: NodeJS.ReadableStream | null = null;
+    private dockerEventReconnectTimeout: NodeJS.Timeout | null = null;
+    private dockerEventMonitorStarting = false;
+
+    private pendingEventProjectNames = new Set<string>();
+    private eventStatusSyncTimeout: NodeJS.Timeout | null = null;
+    private eventStatusSyncInProgress = false;
+
+    async startDockerEventMonitor(): Promise<boolean> {
+        if (this.dockerEventStream) {
+            return true;
+        }
+
+        if (this.dockerEventMonitorStarting) {
+            return false;
+        }
+
+        this.dockerEventMonitorStarting = true;
+        const client = DockerClient.getInstance();
+
+        try {
+            const stream = await client.getEvents();
+
+            if (!stream) {
+                log.warn("server", "Docker event monitoring disabled - API not available");
+                return false;
+            }
+
+            this.dockerEventStream = stream;
+            let buffer = "";
+
+            stream.on("data", async (chunk) => {
+                // Reset reconnect attempts on successful data
+                this.dockerEventReconnectAttempts = 0;
+
+                buffer += chunk.toString();
+                const lines = buffer.split("\n");
+                buffer = lines.pop() || "";
+
+                for (const line of lines) {
+                    if (!line.trim()) {
+                        continue;
+                    }
+                    try {
+                        const event = JSON.parse(line);
+                        if (event.Type === "container" && event.Actor?.Attributes) {
+                            const projectName = event.Actor.Attributes["com.docker.compose.project"];
+                            if (projectName) {
+                                this.scheduleEventStatusSync(projectName);
+                            }
+                        }
+                    } catch (e) {
+                        // Ignore invalid JSON (partial data)
+                    }
+                }
+            });
+
+            stream.on("error", (err) => {
+                log.error("server", "Docker event stream error: " + (err instanceof Error ? err.message : String(err)));
+                this.scheduleDockerEventReconnect();
+            });
+
+            stream.on("end", () => {
+                log.warn("server", "Docker event stream ended unexpectedly");
+                this.scheduleDockerEventReconnect();
+            });
+
+            stream.on("close", () => {
+                log.debug("server", "Docker event stream closed");
+                // Only reconnect if this wasn't intentional (e.g., during shutdown)
+                if (this.dockerEventStream) {
+                    this.scheduleDockerEventReconnect();
+                }
+            });
+
+            log.info("server", "Docker event monitor started");
+            return true;
+        } catch (e) {
+            log.error("server", "Failed to start Docker event monitor: " + (e instanceof Error ? e.message : String(e)));
+            this.scheduleDockerEventReconnect();
+            return false;
+        } finally {
+            this.dockerEventMonitorStarting = false;
+        }
+    }
+
+    private scheduleDockerEventReconnect() {
+        if (this.dockerEventReconnectTimeout) {
+            return;
+        }
+
+        // Clean up current stream
+        this.cleanupDockerEventStream();
+
+        if (this.dockerEventReconnectAttempts < this.maxDockerEventReconnectAttempts) {
+            this.dockerEventReconnectAttempts++;
+            // Exponential backoff: 2s, 4s, 8s, 16s, ... max 5 minutes
+            const delay = Math.min(2000 * Math.pow(2, this.dockerEventReconnectAttempts - 1), 300000);
+            log.info("server", `Reconnecting to Docker events in ${delay / 1000}s (attempt ${this.dockerEventReconnectAttempts}/${this.maxDockerEventReconnectAttempts})`);
+
+            this.dockerEventReconnectTimeout = setTimeout(() => {
+                this.dockerEventReconnectTimeout = null;
+                void this.startDockerEventMonitor();
+            }, delay);
+        } else {
+            log.error("server", "Max reconnect attempts reached for Docker events. Event monitoring disabled.");
+            log.info("server", "Stack status will still be updated via periodic polling.");
+        }
+    }
+
+    private scheduleEventStatusSync(projectName: string) {
+        this.pendingEventProjectNames.add(projectName);
+
+        if (this.eventStatusSyncTimeout) {
+            return;
+        }
+
+        // Debounce multiple events into a single status update & push.
+        this.eventStatusSyncTimeout = setTimeout(() => {
+            this.eventStatusSyncTimeout = null;
+            void this.flushEventStatusSync();
+        }, 1000);
+    }
+
+    private async flushEventStatusSync() {
+        if (this.eventStatusSyncInProgress) {
+            // Let the pending set accumulate; the next timer tick will flush.
+            if (!this.eventStatusSyncTimeout) {
+                this.eventStatusSyncTimeout = setTimeout(() => {
+                    this.eventStatusSyncTimeout = null;
+                    void this.flushEventStatusSync();
+                }, 1000);
+            }
+            return;
+        }
+
+        this.eventStatusSyncInProgress = true;
+        try {
+            const projectNames = Array.from(this.pendingEventProjectNames);
+            this.pendingEventProjectNames.clear();
+
+            if (projectNames.length === 0) {
+                return;
+            }
+
+            const stackList = await Stack.getStackList(this, true, true);
+            let changedAny = false;
+
+            for (const projectName of projectNames) {
+                const stack = stackList.get(projectName);
+                if (!stack) {
+                    continue;
+                }
+
+                const changed = await stack.syncStatus();
+                if (changed) {
+                    changedAny = true;
+                }
+            }
+
+            if (changedAny) {
+                log.debug("server", "Stack status changed (Event), sending update");
+                await this.sendStackList(true, true);
+            }
+        } finally {
+            this.eventStatusSyncInProgress = false;
+        }
+    }
+
+    private cleanupDockerEventStream() {
+        if (this.dockerEventStream) {
+            try {
+                // Remove all listeners to prevent memory leaks
+                this.dockerEventStream.removeAllListeners();
+                // Attempt to destroy the stream if possible
+                if ("destroy" in this.dockerEventStream && typeof this.dockerEventStream.destroy === "function") {
+                    this.dockerEventStream.destroy();
+                }
+            } catch (e) {
+                log.debug("server", "Error cleaning up Docker event stream: " + (e instanceof Error ? e.message : String(e)));
+            }
+            this.dockerEventStream = null;
+        }
     }
 
 }

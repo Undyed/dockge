@@ -17,9 +17,19 @@ COPY . .
 RUN npm run build:frontend
 
 ############################################
+# Backend Build (TS -> JS)
+############################################
+FROM node:22-bookworm AS build_backend_compiler
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY . .
+RUN npm run build:backend
+
+############################################
 # Backend Dependencies
 ############################################
-FROM node:22-bookworm-slim AS build_backend
+FROM node:22-bookworm-slim AS backend_dependencies
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
@@ -53,8 +63,9 @@ RUN apt-get update && apt-get install --yes --no-install-recommends \
 
 # Copy built artifacts
 COPY --chown=node:node --from=build_healthcheck /app/extra/healthcheck /app/extra/healthcheck
-COPY --from=build_backend /app/node_modules /app/node_modules
+COPY --from=backend_dependencies /app/node_modules /app/node_modules
 COPY --from=build_frontend /app/frontend-dist /app/frontend-dist
+COPY --chown=node:node --from=build_backend_compiler /app/dist /app/dist
 COPY --chown=node:node . .
 
 # Remove unnecessary files for production
@@ -70,7 +81,7 @@ VOLUME /app/data
 EXPOSE 5001
 HEALTHCHECK --interval=60s --timeout=30s --start-period=60s --retries=5 CMD extra/healthcheck
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
-CMD ["tsx", "./backend/index.ts"]
+CMD ["node", "./dist/backend/index.js"]
 
 ############################################
 # Mark as Nightly

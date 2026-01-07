@@ -18,6 +18,25 @@ export default defineConfig({
     root: "./frontend",
     build: {
         outDir: "../frontend-dist",
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    "vue": [ "vue", "vue-router" ],
+                    "bootstrap-vue-next": [ "bootstrap-vue-next", "bootstrap" ],
+                    "codemirror": [
+                        "codemirror",
+                        "vue-codemirror",
+                        "@codemirror/lang-javascript",
+                        "@codemirror/lang-yaml",
+                        "@codemirror/theme-one-dark",
+                        "@codemirror/view",
+                        "@codemirror/state",
+                        "@codemirror/language",
+                    ],
+                    "xterm": [ "@xterm/xterm", "@xterm/addon-fit", "xterm-addon-web-links" ],
+                }
+            },
+        },
     },
     plugins: [
         vue(),

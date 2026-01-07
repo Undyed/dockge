@@ -177,4 +177,28 @@ export class DockerClient {
             return false;
         }
     }
+
+    /**
+     * Get Docker events stream
+     */
+    async getEvents(): Promise<NodeJS.ReadableStream | null> {
+        try {
+            await this.ensureConnectionChecked();
+            await this.retryConnectionCheckIfNeeded();
+
+            if (this.useAPI) {
+                return await this.dockerode.getEvents();
+            } else {
+                // CLI implementation of events is possible but tricky to handle streams in this wrapper structure perfectly.
+                // For now, only support API events. Most 29+ setups on linux will support the socket.
+                log.warn("docker-client", "Docker API is not available, event listening is disabled.");
+                return null;
+            }
+        } catch (e) {
+            if (e instanceof Error) {
+                log.error("docker-client", "Failed to get Docker events: " + e.message);
+            }
+            return null;
+        }
+    }
 }

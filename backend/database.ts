@@ -11,6 +11,7 @@ import Dialect from "knex/lib/dialects/sqlite3/index.js";
 
 import sqlite from "@louislam/sqlite3";
 import { sleep } from "../common/util-common";
+import { fileURLToPath } from "url";
 
 interface DBConfig {
     type?: "sqlite" | "mysql";
@@ -32,7 +33,7 @@ export class Database {
 
     static dbConfig: DBConfig = {};
 
-    static knexMigrationsPath = "./backend/migrations";
+    static knexMigrationsPath = path.join(path.dirname(fileURLToPath(import.meta.url)), "migrations");
 
     private static server : DockgeServer;
 

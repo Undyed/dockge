@@ -16,6 +16,7 @@
         "release-final": "tsx ./extra/test-docker.ts && tsx extra/update-version.ts && npm run build:docker",
         "release-beta": "tsx ./extra/test-docker.ts && tsx extra/update-version.ts && npm run build:docker-beta",
         "build:frontend": "vite build --config ./frontend/vite.config.ts",
+        "build:backend": "esbuild backend/index.ts --bundle --platform=node --format=esm --packages=external --outdir=dist/backend && esbuild backend/migrations/*.ts --platform=node --format=esm --outdir=dist/backend/migrations",
         "build:docker": "node ./extra/env2arg.js docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 -t louislam/dockge:latest -t louislam/dockge:1 -t louislam/dockge:$VERSION -t louislam/dockge:beta -t louislam/dockge:nightly --target release -f ./docker/Dockerfile . --push",
         "build:docker-beta": "node ./extra/env2arg.js docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 -t louislam/dockge:beta -t louislam/dockge:$VERSION --target release -f ./docker/Dockerfile . --push",
         "build:docker-nightly": "docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 -t louislam/dockge:nightly --target nightly -f ./docker/Dockerfile . --push",
