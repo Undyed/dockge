@@ -2,22 +2,27 @@ import { SocketHandler } from "../socket-handler.js";
 import { DockgeServer } from "../dockge-server";
 import { log } from "../log";
 import { callbackError, callbackResult, checkLogin, DockgeSocket } from "../util-server";
-import { LooseObject } from "../../common/util-common";
+
+interface AgentInput {
+    url: string;
+    username: string;
+    password: string;
+}
 
 export class ManageAgentSocketHandler extends SocketHandler {
 
-    create(socket : DockgeSocket, server : DockgeServer) {
+    create(socket: DockgeSocket, server: DockgeServer) {
         // addAgent
-        socket.on("addAgent", async (requestData : unknown, callback : unknown) => {
+        socket.on("addAgent", async (requestData: unknown, callback: unknown) => {
             try {
                 log.debug("manage-agent-socket-handler", "addAgent");
                 checkLogin(socket);
 
-                if (typeof(requestData) !== "object") {
+                if (typeof (requestData) !== "object") {
                     throw new Error("Data must be an object");
                 }
 
-                let data = requestData as LooseObject;
+                let data = requestData as AgentInput;
                 let manager = socket.instanceManager;
                 await manager.test(data.url, data.username, data.password);
                 await manager.add(data.url, data.username, data.password);
@@ -42,12 +47,12 @@ export class ManageAgentSocketHandler extends SocketHandler {
         });
 
         // removeAgent
-        socket.on("removeAgent", async (url : unknown, callback : unknown) => {
+        socket.on("removeAgent", async (url: unknown, callback: unknown) => {
             try {
                 log.debug("manage-agent-socket-handler", "removeAgent");
                 checkLogin(socket);
 
-                if (typeof(url) !== "string") {
+                if (typeof (url) !== "string") {
                     throw new Error("URL must be a string");
                 }
 

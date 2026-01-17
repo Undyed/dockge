@@ -2,36 +2,102 @@
 @import "bootstrap/scss/bootstrap";
 @import "bootstrap-vue-next/dist/bootstrap-vue-next.css";
 
-// 全局背景色设置 - 确保浅色主题使用护眼背景
-html, body {
+// Keyframes
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.4s $easing-out backwards;
+}
+
+.animate-slide-up {
+    animation: slideUp 0.5s $easing-out backwards;
+}
+
+// Glassmorphism Utility
+.glass {
+    background: $glass-bg !important;
+    backdrop-filter: blur($glass-blur);
+    -webkit-backdrop-filter: blur($glass-blur);
+    border: $glass-border;
+
+    .dark & {
+        background: $dark-glass-bg !important;
+        border: $dark-glass-border;
+    }
+}
+
+// Global Reset & Typography
+html,
+body {
+    height: 100%;
+
     &:not(.dark) {
-        background-color: #f5f3f0 !important;
+        background-color: $light-bg !important;
     }
 }
 
 #app {
-    font-family: BlinkMacSystemFont, segoe ui, Roboto, helvetica neue, Arial, noto sans, sans-serif, apple color emoji, segoe ui emoji, segoe ui symbol, noto color emoji;
-    
+    font-family: $font-family-base;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+
     &:not(.dark) {
-        background-color: #f5f3f0 !important;
+        background-color: $light-bg !important;
         min-height: 100vh;
     }
 }
 
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+
 h1 {
-    font-size: 32px;
+    font-size: 2.25rem;
 }
 
 h2 {
-    font-size: 26px;
+    font-size: 1.75rem;
 }
 
+// Component Styling
 textarea.form-control {
-    border-radius: 19px;
+    border-radius: $border-radius-lg;
 }
 
 ::-webkit-scrollbar {
-    width: 10px;
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 4px;
 }
 
 .bg-maintenance {
@@ -49,15 +115,18 @@ textarea.form-control {
 
 ::placeholder {
     color: $dark-font-color3;
+    opacity: 0.7;
 }
 
 .incident a,
 .bg-maintenance a {
     color: inherit;
+    text-decoration: underline;
 }
 
 .list-group {
-    border-radius: 0.75rem;
+    border-radius: $border-radius;
+    overflow: hidden;
 
     .dark & {
         .list-group-item {
@@ -68,132 +137,178 @@ textarea.form-control {
     }
 }
 
-
-// optgroup
 optgroup {
     color: #b1b1b1;
+
     option {
         color: #212529;
     }
 }
 
-.dark {
-    optgroup {
-        color: #535864;
-        option {
-            color: $dark-font-color;
-        }
+.dark optgroup {
+    color: #535864;
+
+    option {
+        color: $dark-font-color;
     }
 }
 
-// Scrollbar
-::-webkit-scrollbar-thumb {
-    background: #ccc;
-    border-radius: 20px;
-}
-
+// Modal & Popups
 .modal {
-    backdrop-filter: blur(3px);
+    backdrop-filter: blur(5px);
 }
 
 .modal-content {
-    border-radius: 1rem;
-    box-shadow: 0 15px 70px rgba(0, 0, 0, 0.1);
+    border-radius: $border-radius-xl;
+    border: none;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 
     .dark & {
-        box-shadow: 0 15px 70px rgb(0 0 0);
-        background-color: $dark-bg;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        background-color: $dark-bg2;
+        border: 1px solid $dark-border-color;
     }
 }
 
-.VuePagination__count {
-    font-size: 13px;
-    text-align: center;
-}
-
+// Shadow Box (Card-like containers)
 .shadow-box {
-    box-shadow: 0 15px 70px rgba(0, 0, 0, 0.1);
-    padding: 10px;
-    border-radius: 10px;
+    background-color: $light-bg2;
+    box-shadow: $light-shadow;
+    padding: 1.25rem;
+    border-radius: $border-radius-lg;
+    transition: transform 0.2s $easing-out, box-shadow 0.2s $easing-out;
+    border: 1px solid rgba(0, 0, 0, 0.03);
 
     &.big-padding {
-        padding: 20px;
+        padding: 2rem;
+    }
+
+    // Hover effect for interactive boxes
+    &.interactive:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
     }
 }
 
 .btn {
-    padding-left: 20px;
-    padding-right: 20px;
+    padding: 0.6rem 1.25rem;
+    font-weight: 500;
+    transition: all 0.2s $easing-out;
+    border-radius: 0.6rem;
+
+    &:active {
+        transform: scale(0.97);
+    }
 }
 
 .btn-sm {
-    border-radius: 25px;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.875rem;
+    border-radius: 0.5rem;
 }
 
 .btn-primary {
     color: white;
     background: $primary-gradient;
+    border: none;
+    box-shadow: 0 4px 12px rgba($primary, 0.25);
 
-    &:hover, &:active, &:focus, &.active {
+    &:hover,
+    &:focus,
+    &.active {
         color: white;
         background: $primary-gradient-active;
-        border-color: $highlight;
+        box-shadow: 0 6px 16px rgba($primary, 0.35);
+        transform: translateY(-1px);
+    }
+
+    &:active {
+        transform: translateY(0) scale(0.98);
+        box-shadow: 0 2px 8px rgba($primary, 0.2);
     }
 
     .dark & {
-        color: $dark-font-color2;
+        color: white;
     }
 }
 
 .btn-normal {
-    $bg-color: #F5F5F5;
-
+    $bg-color: #f1f3f5;
     background-color: $bg-color;
-    border-color: $bg-color;
+    border-color: transparent;
+    color: $light-font-color;
 
     &:hover {
-        $hover-color: darken($bg-color, 3%);
-        background-color: $hover-color;
-        border-color: $hover-color;
+        background-color: darken($bg-color, 5%);
+        color: $light-font-color;
     }
 }
 
 .btn-warning {
-    color: white;
+    color: #fff;
+    background-color: $warning;
+    border: none;
 
-    &:hover, &:active, &:focus, &.active {
-        color: white;
+    &:hover {
+        color: #fff;
+        filter: brightness(1.05);
     }
 }
 
 .btn-info {
-    color: white;
+    color: #fff;
+    background-color: $info;
+    border: none;
 
-    &:hover, &:active, &:focus, &.active {
-        color: white;
+    &:hover {
+        color: #fff;
+        filter: brightness(1.05);
     }
 }
 
 .btn-dark {
-    background-color: #161B22;
+    background-color: $dark-bg2;
+    border: 1px solid $dark-border-color;
+    color: $dark-font-color;
+
+    &:hover {
+        background-color: lighten($dark-bg2, 5%);
+        border-color: lighten($dark-border-color, 10%);
+    }
 }
 
 .btn-outline-normal {
-    padding: 4px 10px;
-    border: 1px solid #ced4da;
-    border-radius: 25px;
+    padding: 0.4rem 1rem;
+    border: 1px solid $light-border-color;
+    border-radius: 2rem;
     background-color: transparent;
+    color: $light-font-color2;
 
-    .dark & {
-        color: $dark-font-color;
-        border: 1px solid $dark-font-color2;
+    &:hover {
+        background-color: $light-bg;
+        color: $light-font-color;
     }
 
     &.active {
         background-color: $highlight-white;
+        border-color: $primary;
+        color: $primary;
+        font-weight: 600;
 
         .dark & {
-            background-color: $dark-font-color2;
+            background-color: rgba($primary, 0.15);
+            color: lighten($primary, 10%);
+            border-color: lighten($primary, 10%);
+        }
+    }
+
+    .dark & {
+        color: $dark-font-color;
+        border-color: $dark-border-color;
+
+        &:hover {
+            background-color: $dark-bg2;
+            color: white;
         }
     }
 }
@@ -250,11 +365,13 @@ optgroup {
     background-color: #090c10;
     color: $dark-font-color;
 
-    mark, .mark {
+    mark,
+    .mark {
         background-color: #b6ad86;
     }
 
-    &::-webkit-scrollbar-thumb, ::-webkit-scrollbar-thumb {
+    &::-webkit-scrollbar-thumb,
+    ::-webkit-scrollbar-thumb {
         background: $dark-border-color;
     }
 
@@ -311,21 +428,24 @@ optgroup {
         background-color: $dark-bg;
     }
 
-    .form-control, .form-select {
+    .form-control,
+    .form-select {
         border-color: $dark-border-color;
     }
 
-    .form-control:disabled, .form-control[readonly] {
+    .form-control:disabled,
+    .form-control[readonly] {
         background-color: #232f3b;
         opacity: 1;
     }
 
-    .table-hover > tbody > tr:hover > * {
+    .table-hover>tbody>tr:hover>* {
         --bs-table-accent-bg: #070a10;
         color: $dark-font-color;
     }
 
-    .nav-pills .nav-link.active, .nav-pills .show > .nav-link {
+    .nav-pills .nav-link.active,
+    .nav-pills .show>.nav-link {
         color: $dark-font-color2;
         background: $primary-gradient;
 
@@ -360,7 +480,10 @@ optgroup {
     .btn-warning {
         color: $dark-font-color2;
 
-        &:hover, &:active, &:focus, &.active {
+        &:hover,
+        &:active,
+        &:focus,
+        &.active {
             color: $dark-font-color2;
         }
     }
@@ -421,6 +544,7 @@ optgroup {
     }
 
     .alert {
+
         &.bg-info,
         &.bg-warning,
         &.bg-danger,
@@ -432,11 +556,14 @@ optgroup {
 }
 
 // Floating Label
-.form-floating > .form-control:focus ~ label::after, .form-floating > .form-control:not(:placeholder-shown) ~ label::after, .form-floating > .form-control-plaintext ~ label::after, .form-floating > .form-select ~ label::after {
+.form-floating>.form-control:focus~label::after,
+.form-floating>.form-control:not(:placeholder-shown)~label::after,
+.form-floating>.form-control-plaintext~label::after,
+.form-floating>.form-select~label::after {
     background-color: transparent;
 }
 
-.form-floating > label {
+.form-floating>label {
     .dark & {
         color: $dark-font-color3 !important;
     }
@@ -618,7 +745,8 @@ h5.settings-subheading::after {
 }
 
 /* required class */
-.code-editor, .css-editor {
+.code-editor,
+.css-editor {
     /* we dont use `language-` classes anymore so thats why we need to add background and text color manually */
 
     border-radius: 1rem;
@@ -715,14 +843,16 @@ body:not(.dark) #app {
 
 // 覆盖Bootstrap默认背景和全局样式
 body:not(.dark) {
-    
+
     // 确保HTML和body都使用护眼背景
-    html, body {
+    html,
+    body {
         background-color: $light-bg !important;
     }
 
     // 主要容器背景
-    .container, .container-fluid {
+    .container,
+    .container-fluid {
         background-color: transparent;
     }
 
@@ -731,7 +861,7 @@ body:not(.dark) {
         background-color: rgba(116, 194, 255, 0.3) !important;
         color: $light-font-color !important;
     }
-    
+
     ::-moz-selection {
         background-color: rgba(116, 194, 255, 0.3) !important;
         color: $light-font-color !important;
@@ -742,12 +872,12 @@ body:not(.dark) {
     textarea,
     select {
         caret-color: $primary !important;
-        
+
         &::selection {
             background-color: rgba(116, 194, 255, 0.35) !important;
             color: $light-font-color !important;
         }
-        
+
         &::-moz-selection {
             background-color: rgba(116, 194, 255, 0.35) !important;
             color: $light-font-color !important;
@@ -794,13 +924,13 @@ body:not(.dark) {
             color: $light-font-color2 !important;
             caret-color: transparent !important; // 禁用状态下隐藏光标
         }
-        
+
         // 文本选择高亮
         &::selection {
             background-color: rgba(116, 194, 255, 0.3) !important;
             color: $light-font-color !important;
         }
-        
+
         &::-moz-selection {
             background-color: rgba(116, 194, 255, 0.3) !important;
             color: $light-font-color !important;
@@ -892,7 +1022,8 @@ body:not(.dark) {
     }
 
     // 代码编辑器
-    .code-editor, .css-editor {
+    .code-editor,
+    .css-editor {
         background-color: $light-bg2;
         border-color: $light-border-color;
     }
@@ -903,12 +1034,12 @@ body:not(.dark) {
         border: 1px solid $light-border-color !important;
         border-radius: 0.5rem !important;
         transition: all 0.2s ease !important;
-        
+
         &.edit-mode {
             background-color: $light-bg2 !important;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
         }
-        
+
         // 焦点状态
         &:focus-within,
         &:has(.prism-editor__textarea:focus) {
@@ -923,18 +1054,18 @@ body:not(.dark) {
         color: $light-font-color !important;
         caret-color: $primary !important; // 光标颜色
         border-radius: 0.5rem !important;
-        
+
         // 文本选择高亮
         &::selection {
             background-color: rgba(116, 194, 255, 0.3) !important;
             color: $light-font-color !important;
         }
-        
+
         &::-moz-selection {
             background-color: rgba(116, 194, 255, 0.3) !important;
             color: $light-font-color !important;
         }
-        
+
         // 行号样式优化
         .prism-editor__line-numbers {
             background-color: darken($light-bg2, 2%) !important;
@@ -945,7 +1076,7 @@ body:not(.dark) {
             text-align: right !important;
             user-select: none !important;
         }
-        
+
         // 当前行高亮
         .prism-editor__line-highlight {
             background-color: rgba(116, 194, 255, 0.08) !important;
@@ -964,67 +1095,67 @@ body:not(.dark) {
             border-color: $primary !important;
             box-shadow: 0 0 0 0.2rem rgba(116, 194, 255, 0.15) !important;
         }
-        
+
         // 文本选择高亮
         &::selection {
             background-color: rgba(116, 194, 255, 0.3) !important;
             color: $light-font-color !important;
         }
-        
+
         &::-moz-selection {
             background-color: rgba(116, 194, 255, 0.3) !important;
             color: $light-font-color !important;
         }
     }
 
-.prism-editor__textarea,
-.prism-editor__editor {
-    background-color: $light-bg2 !important;
-    color: $light-font-color !important;
-    caret-color: $primary !important; // 光标颜色
-    font-family: 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace !important;
-    font-size: 14px !important;
-    line-height: 1.6 !important;
-    
-    // 文本选择高亮
-    &::selection {
-        background-color: rgba(116, 194, 255, 0.3) !important;
+    .prism-editor__textarea,
+    .prism-editor__editor {
+        background-color: $light-bg2 !important;
         color: $light-font-color !important;
-    }
-    
-    &::-moz-selection {
-        background-color: rgba(116, 194, 255, 0.3) !important;
-        color: $light-font-color !important;
-    }
-    
-    // 占位符样式
-    &::placeholder {
-        color: $light-font-color3 !important;
-    }
-}
+        caret-color: $primary !important; // 光标颜色
+        font-family: 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace !important;
+        font-size: 14px !important;
+        line-height: 1.6 !important;
 
-// 保持文本透明以避免覆盖语法高亮，但显式设置光标与选区底色
-.prism-editor__textarea {
-    -webkit-text-fill-color: transparent !important;
-    color: transparent !important;
-    caret-color: $primary !important;
+        // 文本选择高亮
+        &::selection {
+            background-color: rgba(116, 194, 255, 0.3) !important;
+            color: $light-font-color !important;
+        }
 
-    &::selection {
-        background-color: rgba(116, 194, 255, 0.35) !important;
+        &::-moz-selection {
+            background-color: rgba(116, 194, 255, 0.3) !important;
+            color: $light-font-color !important;
+        }
+
+        // 占位符样式
+        &::placeholder {
+            color: $light-font-color3 !important;
+        }
+    }
+
+    // 保持文本透明以避免覆盖语法高亮，但显式设置光标与选区底色
+    .prism-editor__textarea {
+        -webkit-text-fill-color: transparent !important;
         color: transparent !important;
-    }
+        caret-color: $primary !important;
 
-    &::-moz-selection {
-        background-color: rgba(116, 194, 255, 0.35) !important;
-        color: transparent !important;
+        &::selection {
+            background-color: rgba(116, 194, 255, 0.35) !important;
+            color: transparent !important;
+        }
+
+        &::-moz-selection {
+            background-color: rgba(116, 194, 255, 0.35) !important;
+            color: transparent !important;
+        }
     }
-}
 
     .prism-editor__container {
         background-color: $light-bg2 !important;
         border-radius: 0.5rem !important;
         overflow: hidden !important;
-        
+
         // 确保编辑器获得焦点时的样式
         &:focus-within {
             outline: 2px solid rgba(116, 194, 255, 0.25) !important;
@@ -1042,7 +1173,7 @@ body:not(.dark) {
             overflow: hidden !important;
             transition: all 0.2s ease !important;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
-            
+
             &:focus-within {
                 border-color: $primary !important;
                 box-shadow: 0 0 0 3px rgba(116, 194, 255, 0.1), 0 2px 8px rgba(0, 0, 0, 0.08) !important;
@@ -1053,18 +1184,18 @@ body:not(.dark) {
             background-color: $light-bg2 !important;
             color: $light-font-color !important;
             caret-color: $primary !important; // 光标颜色
-            
+
             // 文本选择高亮
             &::selection {
                 background-color: rgba(116, 194, 255, 0.3) !important;
                 color: $light-font-color !important;
             }
-            
+
             &::-moz-selection {
                 background-color: rgba(116, 194, 255, 0.3) !important;
                 color: $light-font-color !important;
             }
-            
+
             // 行号样式
             :deep(.prism-editor__line-numbers) {
                 background-color: darken($light-bg2, 2%) !important;
@@ -1084,7 +1215,7 @@ body:not(.dark) {
             overflow: hidden !important;
             transition: all 0.2s ease !important;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
-            
+
             &:focus-within {
                 border-color: $primary !important;
                 box-shadow: 0 0 0 3px rgba(116, 194, 255, 0.1), 0 2px 8px rgba(0, 0, 0, 0.08) !important;
@@ -1096,18 +1227,18 @@ body:not(.dark) {
             background-color: $light-bg2 !important;
             color: $light-font-color !important;
             caret-color: $primary !important; // 光标颜色
-            
+
             // 文本选择高亮
             &::selection {
                 background-color: rgba(116, 194, 255, 0.3) !important;
                 color: $light-font-color !important;
             }
-            
+
             &::-moz-selection {
                 background-color: rgba(116, 194, 255, 0.3) !important;
                 color: $light-font-color !important;
             }
-            
+
             // 行号样式
             :deep(.prism-editor__line-numbers) {
                 background-color: darken($light-bg2, 2%) !important;
@@ -1120,11 +1251,12 @@ body:not(.dark) {
 
     // 编辑器通用样式优化
     .prism-editor-wrapper {
+
         // 当前行高亮
         .prism-editor__line-highlight {
             background-color: rgba(116, 194, 255, 0.1) !important;
         }
-        
+
         // 行号区域
         .prism-editor__line-numbers {
             background-color: darken($light-bg2, 2%) !important;
@@ -1136,7 +1268,7 @@ body:not(.dark) {
             user-select: none !important;
             transition: border-color 0.2s ease !important;
         }
-        
+
         // 编辑器获得焦点时的样式
         &:focus-within {
             .prism-editor__line-numbers {
@@ -1144,7 +1276,7 @@ body:not(.dark) {
             }
         }
     }
-    
+
     // 所有 Prism 编辑器的行号统一样式
     .prism-editor__line-numbers {
         body:not(.dark) & {
@@ -1157,40 +1289,41 @@ body:not(.dark) {
             user-select: none !important;
         }
     }
-    
+
     // 统一所有编辑器的滚动条样式
     .prism-editor__editor,
     .prism-editor__textarea,
     .yaml-editor,
     .env-editor,
     .file-editor {
+
         // 滚动条样式
         &::-webkit-scrollbar {
             width: 10px !important;
             height: 10px !important;
         }
-        
+
         &::-webkit-scrollbar-track {
             background-color: $light-bg !important;
             border-radius: 5px !important;
         }
-        
+
         &::-webkit-scrollbar-thumb {
             background-color: rgba(132, 146, 166, 0.3) !important;
             border-radius: 5px !important;
             border: 2px solid $light-bg !important;
-            
+
             &:hover {
                 background-color: rgba(132, 146, 166, 0.5) !important;
             }
         }
     }
-    
+
     // 统一编辑器容器的内边距和间距
     .editor-box,
     .editor-container {
         padding: 0 !important;
-        
+
         .prism-editor__container {
             padding: 0.75rem !important;
         }
@@ -1198,17 +1331,18 @@ body:not(.dark) {
 
     // 语法高亮优化（针对浅色主题）
     .token {
+
         &.comment,
         &.prolog,
         &.doctype,
         &.cdata {
             color: #6a737d !important; // 注释颜色 - 柔和的灰色
         }
-        
+
         &.punctuation {
             color: #5a6c7d !important; // 标点符号 - 使用主题字体颜色2
         }
-        
+
         &.property,
         &.tag,
         &.boolean,
@@ -1218,7 +1352,7 @@ body:not(.dark) {
         &.deleted {
             color: #c7254e !important; // 属性和数字 - 更柔和的红色
         }
-        
+
         &.selector,
         &.attr-name,
         &.string,
@@ -1227,35 +1361,35 @@ body:not(.dark) {
         &.inserted {
             color: #0d7377 !important; // 字符串 - 深青色，在浅色背景下更清晰
         }
-        
+
         &.operator,
         &.entity,
         &.url {
             color: #6f42c1 !important; // 操作符 - 保持紫色
         }
-        
+
         &.atrule,
         &.attr-value,
         &.keyword {
             color: #d73a49 !important; // 关键字 - 保持红色以突出显示
         }
-        
+
         &.function,
         &.class-name {
             color: #6f42c1 !important; // 函数名 - 保持紫色
         }
-        
+
         // YAML 特定语法高亮
         &.key.atrule {
             color: #005cc5 !important; // YAML 键名 - 蓝色
         }
-        
+
         // 变量和插值
         &.variable,
         &.interpolation {
             color: #e36209 !important; // 橙色，用于变量
         }
-        
+
         // 正则表达式
         &.regex {
             color: #032f62 !important; // 深蓝色
@@ -1285,7 +1419,7 @@ body:not(.dark) {
     // 滚动条优化
     ::-webkit-scrollbar-thumb {
         background: rgba(132, 146, 166, 0.3);
-        
+
         &:hover {
             background: rgba(132, 146, 166, 0.5);
         }

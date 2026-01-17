@@ -357,6 +357,14 @@ export default {
     height: calc(100vh - 150px);
     position: sticky;
     top: 10px;
+    background: rgba(255, 255, 255, 0.85); // fallback
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.4);
+
+    .dark & {
+        background: rgba(0, 0, 0, 0.3); // transparent for glass
+        border-color: rgba(255,255,255,0.05);
+    }
 }
 
 .small-padding {
@@ -365,15 +373,16 @@ export default {
 }
 
 .list-header {
-    border-bottom: 1px solid #dee2e6;
-    border-radius: 10px 10px 0 0;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    border-radius: $border-radius-lg $border-radius-lg 0 0;
     margin: -10px;
     margin-bottom: 10px;
-    padding: 10px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.5);
 
     .dark & {
-        background-color: $dark-header-bg;
-        border-bottom: 0;
+        background-color: rgba(255,255,255,0.03);
+        border-bottom: 1px solid rgba(255,255,255,0.05);
     }
 }
 
@@ -399,11 +408,30 @@ export default {
 .search-wrapper {
     display: flex;
     align-items: center;
+    background: rgba(0,0,0,0.03);
+    border-radius: 20px;
+    padding: 2px 10px;
+    transition: all 0.2s;
+
+    &:focus-within {
+        background: white;
+        box-shadow: 0 0 0 2px rgba($primary, 0.3);
+
+        .dark & {
+            background: rgba(0,0,0,0.2);
+        }
+    }
+
+    .dark & {
+        background: rgba(255,255,255,0.05);
+    }
 }
 
 .search-icon {
-    padding: 10px;
-    color: #c0c0c0;
+    padding: 5px;
+    color: #999;
+    display: flex;
+    align-items: center;
 
     // Clear filter button (X)
     svg[data-icon="times"] {
@@ -411,13 +439,27 @@ export default {
         transition: all ease-in-out 0.1s;
 
         &:hover {
-            opacity: 0.5;
+            color: $danger;
         }
     }
 }
 
 .search-input {
     max-width: 15em;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 5px;
+    color: $light-font-color;
+    font-size: 0.9em;
+
+    &:focus {
+        outline: none;
+    }
+
+    .dark & {
+        color: $dark-font-color;
+    }
 }
 
 .stack-item {
@@ -443,5 +485,4 @@ export default {
     align-items: center;
     gap: 10px;
 }
-
 </style>

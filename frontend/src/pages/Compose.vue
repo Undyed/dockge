@@ -86,7 +86,7 @@
                     <!-- General -->
                     <div v-if="isAdd">
                         <h4 class="mb-3">{{ $t("general") }}</h4>
-                        <div class="shadow-box big-padding mb-3">
+                        <div class="shadow-box glass big-padding mb-3">
                             <!-- Stack Name -->
                             <div>
                                 <label for="name" class="form-label">{{ $t("stackName") }}</label>
@@ -137,7 +137,7 @@
                     <!-- General -->
                     <div v-if="isEditMode">
                         <h4 class="mb-3">{{ $t("extra") }}</h4>
-                        <div class="shadow-box big-padding mb-3">
+                        <div class="shadow-box glass big-padding mb-3">
                             <!-- URLs -->
                             <div class="mb-4">
                                 <label class="form-label">
@@ -207,7 +207,7 @@
 
                         <!-- Networks -->
                         <h4 class="mb-3">{{ $tc("network", 2) }}</h4>
-                        <div class="shadow-box big-padding mb-3">
+                        <div class="shadow-box glass big-padding mb-3">
                             <NetworkInput />
                         </div>
 

@@ -1,11 +1,16 @@
 import { DockgeSocket } from "./util-server";
 import { io, Socket as SocketClient } from "socket.io-client";
 import { log } from "./log";
-import { Agent } from "./models/agent";
-import { isDev, LooseObject, sleep } from "../common/util-common";
+import { Agent, AgentJSON } from "./models/agent";
+import { isDev, sleep } from "../common/util-common";
 import semver from "semver";
 import { AgentRepo } from "./repositories/agent-repo";
 import dayjs, { Dayjs } from "dayjs";
+
+interface LoginResponse {
+    ok: boolean;
+    msg: string;
+}
 
 /**
  * Dockge Instance Manager
@@ -13,20 +18,20 @@ import dayjs, { Dayjs } from "dayjs";
  */
 export class AgentManager {
 
-    protected socket : DockgeSocket;
-    protected agentSocketList : Record<string, SocketClient> = {};
-    protected agentLoggedInList : Record<string, boolean> = {};
-    protected _firstConnectTime : Dayjs = dayjs();
+    protected socket: DockgeSocket;
+    protected agentSocketList: Record<string, SocketClient> = {};
+    protected agentLoggedInList: Record<string, boolean> = {};
+    protected _firstConnectTime: Dayjs = dayjs();
 
     constructor(socket: DockgeSocket) {
         this.socket = socket;
     }
 
-    get firstConnectTime() : Dayjs {
+    get firstConnectTime(): Dayjs {
         return this._firstConnectTime;
     }
 
-    test(url : string, username : string, password : string) : Promise<void> {
+    test(url: string, username: string, password: string): Promise<void> {
         return new Promise((resolve, reject) => {
             let obj = new URL(url);
             let endpoint = obj.host;
@@ -50,7 +55,7 @@ export class AgentManager {
                 client.emit("login", {
                     username: username,
                     password: password,
-                }, (res : LooseObject) => {
+                }, (res: LoginResponse) => {
                     if (res.ok) {
                         resolve();
                     } else {
@@ -77,7 +82,7 @@ export class AgentManager {
      * @param username
      * @param password
      */
-    async add(url : string, username : string, password : string) : Promise<Agent> {
+    async add(url: string, username: string, password: string): Promise<Agent> {
         const row = await AgentRepo.create(url, username, password);
         return Agent.fromRow(row);
     }
@@ -86,7 +91,7 @@ export class AgentManager {
      *
      * @param url
      */
-    async remove(url : string) {
+    async remove(url: string) {
         const row = await AgentRepo.getByUrl(url);
         if (row) {
             const endpoint = (new URL(row.url)).host;
@@ -99,7 +104,7 @@ export class AgentManager {
         }
     }
 
-    connect(url : string, username : string, password : string) {
+    connect(url: string, username: string, password: string) {
         let obj = new URL(url);
         let endpoint = obj.host;
 
@@ -131,7 +136,7 @@ export class AgentManager {
             client.emit("login", {
                 username: username,
                 password: password,
-            }, (res : LooseObject) => {
+            }, (res: LoginResponse) => {
                 if (res.ok) {
                     log.info("agent-manager", "Logged in to the socket server: " + endpoint);
                     this.agentLoggedInList[endpoint] = true;
@@ -166,7 +171,7 @@ export class AgentManager {
             });
         });
 
-        client.on("agent", (...args : unknown[]) => {
+        client.on("agent", (...args: unknown[]) => {
             this.socket.emit("agent", ...args);
         });
 
@@ -187,7 +192,7 @@ export class AgentManager {
         this.agentSocketList[endpoint] = client;
     }
 
-    disconnect(endpoint : string) {
+    disconnect(endpoint: string) {
         let client = this.agentSocketList[endpoint];
         client?.disconnect();
     }
@@ -200,7 +205,7 @@ export class AgentManager {
             return;
         }
 
-        let list : Record<string, Agent> = await Agent.getAgentList();
+        let list: Record<string, Agent> = await Agent.getAgentList();
 
         if (Object.keys(list).length !== 0) {
             log.info("agent-manager", "Connecting to all instance socket server(s)...");
@@ -218,7 +223,7 @@ export class AgentManager {
         }
     }
 
-    async emitToEndpoint(endpoint: string, eventName: string, ...args : unknown[]) {
+    async emitToEndpoint(endpoint: string, eventName: string, ...args: unknown[]) {
         log.debug("agent-manager", "Emitting event to endpoint: " + endpoint);
         let client = this.agentSocketList[endpoint];
 
@@ -253,7 +258,7 @@ export class AgentManager {
         client.emit("agent", endpoint, eventName, ...args);
     }
 
-    emitToAllEndpoints(eventName: string, ...args : unknown[]) {
+    emitToAllEndpoints(eventName: string, ...args: unknown[]) {
         log.debug("agent-manager", "Emitting event to all endpoints");
         for (let endpoint in this.agentSocketList) {
             this.emitToEndpoint(endpoint, eventName, ...args).catch((e) => {
@@ -264,7 +269,7 @@ export class AgentManager {
 
     async sendAgentList() {
         let list = await Agent.getAgentList();
-        let result : Record<string, LooseObject> = {};
+        let result: Record<string, AgentJSON> = {};
 
         // Myself
         result[""] = {

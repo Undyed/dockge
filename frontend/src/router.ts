@@ -29,58 +29,71 @@ const routes = [
                         name: "DashboardHome",
                         path: "/",
                         component: DashboardHome,
+                        meta: { title: "Dashboard" },
                         children: [
                             {
                                 path: "/compose",
                                 component: Compose,
+                                meta: { title: "Create Stack" },
                             },
                             {
                                 path: "/compose/:stackName/:endpoint",
                                 component: Compose,
+                                meta: { title: "Edit Stack" },
                             },
                             {
                                 path: "/compose/:stackName",
                                 component: Compose,
+                                meta: { title: "Edit Stack" },
                             },
                             {
                                 path: "/terminal/:stackName/:serviceName/:type",
                                 component: ContainerTerminal,
                                 name: "containerTerminal",
+                                meta: { title: "Terminal" },
                             },
                             {
                                 path: "/terminal/:stackName/:serviceName/:type/:endpoint",
                                 component: ContainerTerminal,
                                 name: "containerTerminalEndpoint",
+                                meta: { title: "Terminal" },
                             },
                         ]
                     },
                     {
                         path: "/console",
                         component: Console,
+                        meta: { title: "Console" },
                     },
                     {
                         path: "/console/:endpoint",
                         component: Console,
+                        meta: { title: "Console" },
                     },
                     {
                         path: "/settings",
                         component: Settings,
+                        meta: { title: "Settings" },
                         children: [
                             {
                                 path: "general",
                                 component: General,
+                                meta: { title: "General Settings" },
                             },
                             {
                                 path: "appearance",
                                 component: Appearance,
+                                meta: { title: "Appearance Settings" },
                             },
                             {
                                 path: "security",
                                 component: Security,
+                                meta: { title: "Security Settings" },
                             },
                             {
                                 path: "about",
                                 component: About,
+                                meta: { title: "About" },
                             },
                         ]
                     },
@@ -91,6 +104,7 @@ const routes = [
     {
         path: "/setup",
         component: Setup,
+        meta: { title: "Setup" },
     },
 ];
 
@@ -98,4 +112,11 @@ export const router = createRouter({
     linkActiveClass: "active",
     history: createWebHistory(),
     routes,
+});
+
+router.beforeEach((to, from, next) => {
+    if (to.meta.title) {
+        document.title = to.meta.title + " - Dockge";
+    }
+    next();
 });

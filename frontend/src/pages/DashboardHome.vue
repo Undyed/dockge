@@ -1,6 +1,6 @@
 <template>
     <transition ref="tableContainer" name="slide-fade" appear>
-        <div v-if="$route.name === 'DashboardHome'">
+        <div v-if="$route.name === 'DashboardHome'" class="animate-fade-in">
             <h1 class="mb-3">
                 {{ $t("home") }}
             </h1>
@@ -9,7 +9,7 @@
                 <!-- Left -->
                 <div class="col-md-7">
                     <!-- Stats -->
-                    <div class="shadow-box big-padding text-center mb-4">
+                    <div class="shadow-box glass big-padding text-center mb-4 animate-slide-up" style="animation-delay: 0.1s">
                         <div class="row">
                             <div class="col">
                                 <h3>{{ $t("active") }}</h3>
@@ -28,16 +28,16 @@
 
                     <!-- Docker Run -->
                     <h2 class="mb-3">{{ $t("Docker Run") }}</h2>
-                    <div class="mb-3">
+                    <div class="mb-3 animate-slide-up" style="animation-delay: 0.2s">
                         <textarea id="name" v-model="dockerRunCommand" type="text" class="form-control docker-run" required placeholder="docker run ..."></textarea>
                     </div>
 
-                    <button class="btn-normal btn mb-4" @click="convertDockerRun">{{ $t("Convert to Compose") }}</button>
+                    <button class="btn-primary btn mb-4 animate-slide-up" style="animation-delay: 0.3s" @click="convertDockerRun">{{ $t("Convert to Compose") }}</button>
                 </div>
                 <!-- Right -->
                 <div class="col-md-5">
                     <!-- Agent List -->
-                    <div class="shadow-box big-padding">
+                    <div class="shadow-box glass big-padding animate-slide-up" style="animation-delay: 0.2s">
                         <h4 class="mb-3">{{ $tc("dockgeAgent", 2) }} <span class="badge bg-warning" style="font-size: 12px;">beta</span></h4>
 
                         <div v-for="(agent, endpoint) in $root.agentList" :key="endpoint" class="mb-3 agent">
@@ -294,56 +294,110 @@ export default {
 @import "../styles/vars";
 
 .num {
-    font-size: 30px;
-
-    font-weight: bold;
+    font-size: 36px;
+    font-weight: 800;
     display: block;
+    background: linear-gradient(135deg, #a1aab3 0%, #6c757d 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 
     &.active {
-        color: $primary;
+        background: $primary-gradient;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
     }
 
     &.exited {
-        color: $danger;
+        background: linear-gradient(135deg, #ff6b6b 0%, #f03e3e 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
     }
 }
 
 .shadow-box {
-    padding: 20px;
+    padding: 24px;
+    border: 1px solid rgba(0,0,0,0.05);
+
+    .dark & {
+        border-color: rgba(255,255,255,0.05);
+    }
 }
 
-table {
-    font-size: 14px;
+h3 {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: $light-font-color3;
+    margin-bottom: 0.5rem;
 
-    tr {
-        transition: all ease-in-out 0.2ms;
-    }
-
-    @media (max-width: 550px) {
-        table-layout: fixed;
-        overflow-wrap: break-word;
+    .dark & {
+        color: $dark-font-color3;
     }
 }
 
 .docker-run {
-    background-color: $dark-bg !important;
-    border: none;
+    background-color: #2b3035 !important;
+    color: #e6edf3;
+    border: 1px solid rgba(255,255,255,0.1);
     font-family: 'JetBrains Mono', monospace;
-    font-size: 15px;
+    font-size: 14px;
+    line-height: 1.5;
+    padding: 1rem;
+    border-radius: $border-radius;
+    transition: all 0.2s;
+
+    &:focus {
+        border-color: $primary;
+        box-shadow: 0 0 0 3px rgba($primary, 0.25);
+    }
 }
 
 .first-row .shadow-box {
-
+    height: 100%;
 }
 
 .remove-agent {
     cursor: pointer;
-    color: rgba(255, 255, 255, 0.3);
+    color: rgba(0, 0, 0, 0.2);
+    transition: color 0.2s;
+
+    &:hover {
+        color: $danger;
+    }
+
+    .dark & {
+        color: rgba(255, 255, 255, 0.2);
+    }
 }
 
 .agent {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: rgba(0,0,0,0.02);
+    transition: all 0.2s;
+
+    &:hover {
+        background: rgba(0,0,0,0.04);
+    }
+
+    .dark & {
+        background: rgba(255,255,255,0.03);
+        &:hover {
+            background: rgba(255,255,255,0.06);
+        }
+    }
+
     a {
         text-decoration: none;
+        font-weight: 500;
+        margin-right: auto;
+        color: $light-font-color;
+
+        .dark & {
+            color: $dark-font-color;
+        }
     }
 }
 

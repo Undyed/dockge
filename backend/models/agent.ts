@@ -1,5 +1,10 @@
-import { LooseObject } from "../../common/util-common";
 import { AgentRepo, AgentRow } from "../repositories/agent-repo";
+
+export interface AgentJSON {
+    url: string;
+    username: string;
+    endpoint: string;
+}
 
 export class Agent {
     url!: string;
@@ -14,9 +19,9 @@ export class Agent {
         return agent;
     }
 
-    static async getAgentList() : Promise<Record<string, Agent>> {
+    static async getAgentList(): Promise<Record<string, Agent>> {
         const rows = await AgentRepo.list();
-        const result : Record<string, Agent> = {};
+        const result: Record<string, Agent> = {};
         for (const row of rows) {
             const agent = Agent.fromRow(row);
             result[agent.endpoint] = agent;
@@ -24,12 +29,12 @@ export class Agent {
         return result;
     }
 
-    get endpoint() : string {
+    get endpoint(): string {
         let obj = new URL(this.url);
         return obj.host;
     }
 
-    toJSON() : LooseObject {
+    toJSON(): AgentJSON {
         return {
             url: this.url,
             username: this.username,

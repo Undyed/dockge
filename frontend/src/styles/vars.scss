@@ -1,37 +1,55 @@
-$primary: #74c2ff;
-$danger: #dc3545;
-$warning: #f8a306;
-$maintenance: #1747f5;
+$primary: #5c7cfa; // Vibrant Indigo-Blue
+$secondary: #7950f2;
+$success: #20c997;
+$danger: #ff6b6b;
+$warning: #fcc419;
+$info: #339af0;
+$maintenance: #4c6ef5;
 $link-color: #111;
-$border-radius: 50rem;
+$border-radius: 0.75rem;
+$border-radius-lg: 1rem;
+$border-radius-xl: 1.5rem;
 
-$highlight: #9dd1ff;
-$highlight-white: #e7faec;
-$highlight-light: #f0f7ff;   // 浅色主题专用高亮色
+$highlight: #a5d8ff;
+$highlight-white: #e7f5ff;
+$highlight-light: #f0f7ff;
 
-// Light theme colors - Eye-friendly warm tones
+// Fonts
+$font-family-base: 'Outfit', 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+// Glassmorphism
+$glass-bg: rgba(255, 255, 255, 0.75);
+$glass-border: 1px solid rgba(255, 255, 255, 0.3);
+$glass-blur: 12px;
+
+$dark-glass-bg: rgba(22, 27, 34, 0.75);
+$dark-glass-border: 1px solid rgba(255, 255, 255, 0.1);
+
+// Light theme colors
 $light-font-color: #2c3e50;
-$light-font-color2: #5a6c7d;
-$light-font-color3: #8492a6;
-$light-bg: #f5f3f0;          // 更明显的米色背景
-$light-bg2: #ede9e4;         // 稍深的米色
-$light-border-color: #ddd8d1; // 柔和的边框色
-$light-header-bg: #f0ede8;   // 头部背景色
-$light-shadow: rgba(0, 0, 0, 0.08);
+$light-font-color2: #495057;
+$light-font-color3: #868e96;
+$light-bg: #f8f9fa;
+$light-bg2: #ffffff;
+$light-border-color: #dee2e6;
+$light-header-bg: rgba(255, 255, 255, 0.9);
+$light-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 
-$dark-font-color: #b1b8c0;
-$dark-font-color2: #020b05;
-$dark-font-color3: #575c62;
+// Dark theme colors
+$dark-font-color: #c9d1d9;
+$dark-font-color2: #f0f6fc;
+$dark-font-color3: #8b949e;
 $dark-bg: #0d1117;
-$dark-bg2: #070a10;
-$dark-border-color: #1d2634;
-$dark-header-bg: #161b22;
+$dark-bg2: #161b22;
+$dark-border-color: #30363d;
+$dark-header-bg: rgba(13, 17, 23, 0.9);
+$dark-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 
-$easing-in: cubic-bezier(0.54, 0.78, 0.55, 0.97);
-$easing-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
-$easing-in-out: cubic-bezier(0.79, 0.14, 0.15, 0.86);
+$easing-in: cubic-bezier(0.4, 0, 0.2, 1);
+$easing-out: cubic-bezier(0.0, 0, 0.2, 1);
+$easing-in-out: cubic-bezier(0.4, 0, 0.2, 1);
 
-$dropdown-border-radius: 0.5rem;
+$dropdown-border-radius: 1rem;
 
-$primary-gradient: linear-gradient(135deg, #74c2ff 0%, #74c2ff 75%, #86e6a9);
-$primary-gradient-active: linear-gradient(135deg, #74c2ff 0%, #74c2ff 50%, #86e6a9);
+$primary-gradient: linear-gradient(135deg, #5c7cfa 0%, #748ffc 100%);
+$primary-gradient-active: linear-gradient(135deg, #4c6ef5 0%, #5c7cfa 100%);

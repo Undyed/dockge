@@ -1,5 +1,4 @@
 import { log } from "./log";
-import { LooseObject } from "../common/util-common";
 import { SettingRepo } from "./repositories/setting-repo";
 
 export class Settings {
@@ -17,18 +16,22 @@ export class Settings {
      *         },
      *     }
      */
-    static cacheList : LooseObject = {
+    static cacheList: Record<string, {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        value: any,
+        timestamp: number
+    }> = {
 
-    };
+        };
 
-    static cacheCleaner? : NodeJS.Timeout;
+    static cacheCleaner?: NodeJS.Timeout;
 
     /**
      * Retrieve value of setting based on key
      * @param key Key of setting to retrieve
      * @returns Value
      */
-    static async get(key : string) {
+    static async get(key: string) {
 
         // Start cache clear if not started yet
         if (!Settings.cacheCleaner) {
@@ -78,10 +81,10 @@ export class Settings {
      * @param {?string} type Type of setting
      * @returns {Promise<void>}
      */
-    static async set(key : string, value : object | string | number | boolean, type : string | null = null) {
+    static async set(key: string, value: object | string | number | boolean, type: string | null = null) {
         await SettingRepo.set(key, value, type);
 
-        Settings.deleteCache([ key ]);
+        Settings.deleteCache([key]);
     }
 
     /**
@@ -89,10 +92,11 @@ export class Settings {
      * @param type The type of setting
      * @returns Settings
      */
-    static async getSettings(type : string) {
+    static async getSettings(type: string) {
         const list = await SettingRepo.listByType(type);
 
-        const result : LooseObject = {};
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const result: Record<string, any> = {};
 
         for (const row of list) {
             try {
@@ -111,7 +115,8 @@ export class Settings {
      * @param data Values of settings
      * @returns {Promise<void>}
      */
-    static async setSettings(type : string, data : LooseObject) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    static async setSettings(type: string, data: Record<string, any>) {
         await SettingRepo.setBulk(type, data);
         Settings.deleteCache(Object.keys(data));
     }
@@ -121,7 +126,7 @@ export class Settings {
      * @param {string[]} keyList Keys to remove
      * @returns {void}
      */
-    static deleteCache(keyList : string[]) {
+    static deleteCache(keyList: string[]) {
         for (const key of keyList) {
             delete Settings.cacheList[key];
         }
