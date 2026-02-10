@@ -23,7 +23,7 @@ export class StatsProvider {
     }
 
     private getStackID(endpoint: string, stackName: string): string {
-        return JSON.stringify([ endpoint, stackName ]);
+        return JSON.stringify([endpoint, stackName]);
     }
 
     private parseStackID(stackID: string): { endpoint: string; stackName: string } | null {
@@ -101,7 +101,7 @@ export class StatsProvider {
         this.start();
 
         // Immediate first poll for this stack
-        void this.pollStack(endpoint, stackName, [ socket ]);
+        void this.pollStack(endpoint, stackName, [socket]);
 
         // Clean up on disconnect
         socket.on("disconnect", () => {
@@ -151,7 +151,7 @@ export class StatsProvider {
             return;
         }
 
-        for (const [ stackID, socketIDs ] of this.subscriptions.entries()) {
+        for (const [stackID, socketIDs] of this.subscriptions.entries()) {
             const parsedStackID = this.parseStackID(stackID);
 
             if (!parsedStackID) {

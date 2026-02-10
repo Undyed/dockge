@@ -9,7 +9,24 @@
                 </span>
             </h1>
 
-            <div v-if="stack.isManagedByDockge" class="mb-3">
+            <div v-if="stack.isManagedByDockge && !isAdd" class="mb-3">
+                <ul class="nav nav-pills small">
+                    <li class="nav-item">
+                        <button class="nav-link" :class="{ active: tab === 'compose' }" @click="tab = 'compose'">
+                            <font-awesome-icon icon="pen-to-square" class="me-1" />
+                            {{ $t("Compose") }}
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" :class="{ active: tab === 'monitoring' }" @click="tab = 'monitoring'">
+                            <font-awesome-icon icon="chart-line" class="me-1" />
+                            {{ $t("Monitoring") }}
+                        </button>
+                    </li>
+                </ul>
+            </div>
+
+            <div v-if="stack.isManagedByDockge && tab === 'compose'" class="mb-3">
                 <div class="btn-group me-2" role="group">
                     <button v-if="isEditMode" class="btn btn-primary" :disabled="processing" @click="deployStack">
                         <font-awesome-icon icon="rocket" class="me-1" />
@@ -80,8 +97,8 @@
                     @has-data="showProgressTerminal = true; submitted = true;"
                 ></Terminal>
             </transition>
-
-            <div v-if="stack.isManagedByDockge" class="row">
+            <!-- Tab Content: Compose -->
+            <div v-if="stack.isManagedByDockge && tab === 'compose'" class="row animate-fade-in">
                 <div class="col-lg-6">
                     <!-- General -->
                     <div v-if="isAdd">
@@ -198,13 +215,6 @@
                     </div>
 
                     <div v-if="isEditMode">
-                        <!-- Volumes -->
-                        <div v-if="false">
-                            <h4 class="mb-3">{{ $tc("volume", 2) }}</h4>
-                            <div class="shadow-box big-padding mb-3">
-                            </div>
-                        </div>
-
                         <!-- Networks -->
                         <h4 class="mb-3">{{ $tc("network", 2) }}</h4>
                         <div class="shadow-box glass big-padding mb-3">
@@ -218,15 +228,195 @@
                             :is-edit-mode="isEditMode"
                         />
                     </div>
+                </div>
+            </div>
 
-                    <!-- <div class="shadow-box big-padding mb-3">
-                        <div class="mb-3">
-                            <label for="name" class="form-label"> Search Templates</label>
-                            <input id="name" v-model="name" type="text" class="form-control" placeholder="Search..." required>
+            <div v-if="stack.isManagedByDockge && tab === 'monitoring' && !isAdd" class="animate-fade-in">
+                <div class="shadow-box glass big-padding">
+                    <div v-if="currentStackStats.length === 0" class="text-center py-5">
+                        <template v-if="active">
+                            <div class="spinner-border text-primary mb-3" role="status"></div>
+                            <p class="text-secondary">{{ $t("loadingStats") }}</p>
+                        </template>
+                        <template v-else>
+                            <font-awesome-icon icon="info-circle" size="3x" class="text-secondary mb-3 opacity-25" />
+                            <p class="text-secondary">{{ $t("inactive") }}</p>
+                        </template>
+                    </div>
+
+                    <div v-else class="service-stats-list">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <p class="text-secondary mb-0 fw-bold">{{ $t("Real-time Resource Usage") }}</p>
+                            <button class="btn btn-sm btn-outline-secondary px-3" @click="expandedStats = !expandedStats">
+                                <font-awesome-icon :icon="expandedStats ? 'compress' : 'expand'" class="me-2" />
+                                {{ expandedStats ? $t("Compact View") : $t("Expanded View") }}
+                            </button>
                         </div>
 
-                        <prism-editor v-if="false" v-model="yamlConfig" class="yaml-editor" :highlight="highlighter" line-numbers @input="yamlCodeChange"></prism-editor>
-                    </div>-->
+                        <div v-for="service in currentStackStats" :key="service.ID" class="service-stats-item mb-5 pb-4 border-bottom last-child-no-border animate-fade-in">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0 fw-bold">
+                                    <font-awesome-icon icon="cube" class="me-2 text-primary opacity-75" />
+                                    {{ service.Name }}
+                                </h5>
+                                <code class="text-secondary small">{{ service.ID }}</code>
+                            </div>
+
+                            <div class="row g-4">
+                                <div :class="expandedStats ? 'col-12' : 'col-md-6'">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <div class="d-flex align-items-center">
+                                            <small class="text-secondary fw-500 text-nowrap me-2">{{ $t("CPU") }}</small>
+                                            <Sparkline
+                                                v-if="statsHistory[service.ID]"
+                                                :data="statsHistory[service.ID].cpu"
+                                                :width="expandedStats ? 400 : 120"
+                                                :height="expandedStats ? 60 : 30"
+                                                class="ms-2 opacity-75"
+                                                color="primary"
+                                                suffix="%"
+                                            />
+                                        </div>
+                                        <span class="fw-bold text-nowrap">{{ service.CPUPerc }}</span>
+                                    </div>
+                                    <div class="progress" :style="{ height: expandedStats ? '10px' : '6px' }">
+                                        <div
+                                            class="progress-bar"
+                                            :class="getUsageClass(parseFloat(service.CPUPerc))"
+                                            :style="{ width: service.CPUPerc }"
+                                        ></div>
+                                    </div>
+                                </div>
+
+                                <div :class="expandedStats ? 'col-12' : 'col-md-6'">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <div class="d-flex align-items-center">
+                                            <small class="text-secondary fw-500 text-nowrap me-2">{{ $t("Memory") }}</small>
+                                            <Sparkline
+                                                v-if="statsHistory[service.ID]"
+                                                :data="statsHistory[service.ID].mem"
+                                                :width="expandedStats ? 400 : 120"
+                                                :height="expandedStats ? 60 : 30"
+                                                class="ms-2 opacity-75"
+                                                color="success"
+                                                suffix="%"
+                                            />
+                                        </div>
+                                        <span class="fw-bold text-nowrap">
+                                            {{ service.MemPerc }}
+                                            <small class="fw-normal text-secondary ms-1">({{ service.MemUsage }})</small>
+                                        </span>
+                                    </div>
+                                    <div class="progress" :style="{ height: expandedStats ? '10px' : '6px' }">
+                                        <div
+                                            class="progress-bar"
+                                            :class="getUsageClass(parseFloat(service.MemPerc))"
+                                            :style="{ width: service.MemPerc }"
+                                        ></div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center text-nowrap mb-2">
+                                        <font-awesome-icon icon="network-wired" class="me-3 text-secondary opacity-50" />
+                                        <div class="d-flex gap-4">
+                                            <div class="d-flex align-items-center">
+                                                <font-awesome-icon icon="arrow-down" class="me-1 text-success" />
+                                                <small class="fw-500">{{ getNetIOPart(service.NetIO, 0) }}</small>
+                                                <Sparkline
+                                                    v-if="statsHistory[service.ID]"
+                                                    :data="statsHistory[service.ID].netIn"
+                                                    :width="expandedStats ? 120 : 60"
+                                                    :height="30"
+                                                    class="ms-2 opacity-50"
+                                                    color="success"
+                                                    :max="0"
+                                                    :formatValue="formatBytes"
+                                                />
+                                            </div>
+                                            <div class="d-flex align-items-center">
+                                                <font-awesome-icon icon="arrow-up" class="me-1 text-primary" />
+                                                <small class="fw-500">{{ getNetIOPart(service.NetIO, 1) }}</small>
+                                                <Sparkline
+                                                    v-if="statsHistory[service.ID]"
+                                                    :data="statsHistory[service.ID].netOut"
+                                                    :width="expandedStats ? 120 : 60"
+                                                    :height="30"
+                                                    class="ms-2 opacity-50"
+                                                    color="primary"
+                                                    :max="0"
+                                                    :formatValue="formatBytes"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Speed line -->
+                                    <div class="d-flex align-items-center text-nowrap mt-3">
+                                        <small class="text-secondary me-3" style="width: 40px;">{{ $t("Speed") }}</small>
+                                        <div class="d-flex gap-4">
+                                            <div class="d-flex align-items-center">
+                                                <Sparkline
+                                                    v-if="statsHistory[service.ID]"
+                                                    :data="statsHistory[service.ID].netInSpeed"
+                                                    :width="expandedStats ? 150 : 80"
+                                                    :height="30"
+                                                    color="success"
+                                                    class="opacity-100"
+                                                    :max="0"
+                                                    :formatValue="(v) => formatBytes(v) + '/s'"
+                                                />
+                                            </div>
+                                            <div class="d-flex align-items-center">
+                                                <Sparkline
+                                                    v-if="statsHistory[service.ID]"
+                                                    :data="statsHistory[service.ID].netOutSpeed"
+                                                    :width="expandedStats ? 150 : 80"
+                                                    :height="30"
+                                                    color="primary"
+                                                    class="opacity-100"
+                                                    :max="0"
+                                                    :formatValue="(v) => formatBytes(v) + '/s'"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6 text-md-end">
+                                    <div class="d-inline-flex align-items-center text-nowrap">
+                                        <font-awesome-icon icon="hdd" class="me-2 text-secondary opacity-50" />
+                                        <div class="d-flex align-items-center align-items-md-end flex-column flex-md-row">
+                                            <small class="text-secondary me-2">
+                                                {{ $t("Disk IO") }}: <span class="text-dark fw-bold ms-1">{{ service.BlockIO || "0B / 0B" }}</span>
+                                            </small>
+                                            <div class="d-flex align-items-center">
+                                                <Sparkline
+                                                    v-if="statsHistory[service.ID]"
+                                                    :data="statsHistory[service.ID].diskRead"
+                                                    :width="expandedStats ? 120 : 50"
+                                                    :height="expandedStats ? 30 : 15"
+                                                    class="ms-2 opacity-50"
+                                                    color="info"
+                                                    :max="0"
+                                                    :formatValue="formatBytes"
+                                                />
+                                                <Sparkline
+                                                    v-if="statsHistory[service.ID]"
+                                                    :data="statsHistory[service.ID].diskWrite"
+                                                    :width="expandedStats ? 120 : 50"
+                                                    :height="expandedStats ? 30 : 15"
+                                                    class="ms-1 opacity-50"
+                                                    color="warning"
+                                                    :max="0"
+                                                    :formatValue="formatBytes"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -258,6 +448,7 @@ import {
 import { BModal } from "bootstrap-vue-next";
 import NetworkInput from "../components/NetworkInput.vue";
 import CustomFileEditor from "../components/CustomFileEditor.vue";
+import Sparkline from "../components/Sparkline.vue";
 import dotenv from "dotenv";
 
 const template = `
@@ -281,6 +472,7 @@ export default {
         FontAwesomeIcon,
         CodeEditor,
         BModal,
+        Sparkline,
     },
     beforeRouteUpdate(to, from, next) {
         this.exitConfirm(next);
@@ -309,6 +501,10 @@ export default {
             showDeleteDialog: false,
             newContainerName: "",
             stopServiceStatusTimeout: false,
+            tab: "compose",
+            currentStackStats: [],
+            statsHistory: {}, // { serviceID: { cpu: [], mem: [] } }
+            expandedStats: false, // Toggle larger charts
         };
     },
     computed: {
@@ -434,6 +630,14 @@ export default {
             deep: true,
         },
 
+        tab(newTab) {
+            if (newTab === "monitoring") {
+                this.subscribeStats();
+            } else {
+                this.unsubscribeStats();
+            }
+        },
+
         $route(to, from) {
 
         }
@@ -476,11 +680,130 @@ export default {
         }
 
         this.requestServiceStatus();
-    },
-    unmounted() {
 
+        this.$root.getSocket().on("agent", this.onAgentEvent);
+    },
+    beforeUnmount() {
+        this.$root.getSocket().off("agent", this.onAgentEvent);
+        this.unsubscribeStats();
     },
     methods: {
+        onAgentEvent(event, data) {
+            if (event === "stackStats" && data.stackName === this.stack.name && (data.endpoint || "") === (this.endpoint || "")) {
+                this.updateStatsHistory(Array.isArray(data.stats) ? data.stats : []);
+            }
+        },
+
+        updateStatsHistory(statsList) {
+            this.currentStackStats = statsList;
+
+            for (const service of statsList) {
+                if (!this.statsHistory[service.ID]) {
+                    this.statsHistory[service.ID] = {
+                        cpu: [],
+                        mem: [],
+                        netIn: [],
+                        netOut: [],
+                        netInSpeed: [],
+                        netOutSpeed: [],
+                        diskRead: [],
+                        diskWrite: [],
+                    };
+                }
+
+                const cpu = parseFloat(service.CPUPerc) || 0;
+                const memPerc = parseFloat(service.MemPerc) || 0;
+
+                const netIn = this.parseSize(this.getNetIOPart(service.NetIO, 0));
+                const netOut = this.parseSize(this.getNetIOPart(service.NetIO, 1));
+                const diskRead = this.parseSize(this.getNetIOPart(service.BlockIO, 0));
+                const diskWrite = this.parseSize(this.getNetIOPart(service.BlockIO, 1));
+
+                // Calculate speeds
+                const history = this.statsHistory[service.ID];
+                let inSpeed = 0;
+                let outSpeed = 0;
+                if (history.netIn.length > 0) {
+                    const lastIn = history.netIn[history.netIn.length - 1];
+                    const lastOut = history.netOut[history.netOut.length - 1];
+                    // Standard interval is 5s
+                    inSpeed = Math.max(0, (netIn - (typeof lastIn === "object" ? lastIn.value : lastIn)) / 5);
+                    outSpeed = Math.max(0, (netOut - (typeof lastOut === "object" ? lastOut.value : lastOut)) / 5);
+                }
+
+                history.cpu.push(cpu);
+                history.mem.push({
+                    value: memPerc,
+                    label: `${memPerc.toFixed(2)}% (${service.MemUsage})`,
+                });
+                history.netIn.push(netIn);
+                history.netOut.push(netOut);
+                history.netInSpeed.push(inSpeed);
+                history.netOutSpeed.push(outSpeed);
+                history.diskRead.push(diskRead);
+                history.diskWrite.push(diskWrite);
+
+                // Keep up to 600 points (approx 50 mins at 5s interval)
+                ["cpu", "mem", "netIn", "netOut", "netInSpeed", "netOutSpeed", "diskRead", "diskWrite"].forEach(key => {
+                    if (history[key].length > 600) {
+                        history[key].shift();
+                    }
+                });
+            }
+        },
+
+        parseSize(sizeStr) {
+            if (typeof sizeStr !== "string") return 0;
+            const units = {
+                "b": 1,
+                "kb": 1000,
+                "mb": 1000 * 1000,
+                "gb": 1000 * 1000 * 1000,
+                "tb": 1000 * 1000 * 1000 * 1000,
+                "kib": 1024,
+                "mib": 1024 * 1024,
+                "gib": 1024 * 1024 * 1024,
+                "tib": 1024 * 1024 * 1024 * 1024,
+            };
+            const match = sizeStr.toLowerCase().match(/^(\d+(?:\.\d+)?)\s*([a-z]+)$/);
+            if (!match) return 0;
+            const value = parseFloat(match[1]);
+            const unit = match[2];
+            return value * (units[unit] || 1);
+        },
+
+        subscribeStats() {
+            if (this.endpoint !== undefined && this.stack.name) {
+                this.$root.emitAgent(this.endpoint, "subscribeStackStats", this.stack.name);
+            }
+        },
+
+        unsubscribeStats() {
+            if (this.endpoint !== undefined && this.stack.name) {
+                this.$root.emitAgent(this.endpoint, "unsubscribeStackStats", this.stack.name);
+            }
+        },
+
+        getNetIOPart(netIO, index) {
+            if (typeof netIO !== "string") return "0B";
+            const parts = netIO.split(" / ");
+            return parts[index] || "0B";
+        },
+
+        formatBytes(bytes) {
+            if (bytes === 0) return "0B";
+            const k = 1024;
+            const sizes = ["B", "KB", "MB", "GB", "TB", "PB"];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + sizes[i];
+        },
+
+        getUsageClass(perc) {
+            const usage = Number.isFinite(perc) ? perc : 0;
+            if (usage > 80) return "bg-danger";
+            if (usage > 50) return "bg-warning";
+            return "bg-primary";
+        },
         startServiceStatusTimeout() {
             clearTimeout(serviceStatusTimeout);
             serviceStatusTimeout = setTimeout(async () => {

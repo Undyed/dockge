@@ -7,9 +7,23 @@
         </div>
 
         <div v-else class="row gy-4">
+            <div class="col-12 mb-2 d-flex justify-content-end">
+                <div class="form-check form-switch">
+                    <input
+                        id="hideInactive"
+                        v-model="hideInactive"
+                        class="form-check-input"
+                        type="checkbox"
+                    >
+                    <label class="form-check-label text-secondary ms-2" for="hideInactive">
+                        {{ $t("hideInactiveStacks") }}
+                    </label>
+                </div>
+            </div>
+
             <div
-                v-for="(stack, stackID) in $root.completeStackList"
-                :key="stackID"
+                v-for="stack in processedStackList"
+                :key="stack.id"
                 class="col-12 col-xl-6"
             >
                 <div class="shadow-box glass h-100">
@@ -24,8 +38,14 @@
                     </div>
 
                     <div v-if="!getStatsForStack(stack)" class="text-center py-4 text-secondary">
-                        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-                        {{ $t("loadingStats") }}
+                        <template v-if="stack.status === RUNNING">
+                            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                            {{ $t("loadingStats") }}
+                        </template>
+                        <template v-else>
+                            <font-awesome-icon icon="info-circle" class="me-2 opacity-50" />
+                            <span class="opacity-75">{{ $t("inactive") }}</span>
+                        </template>
                     </div>
 
                     <div v-else class="service-list">
@@ -43,10 +63,11 @@
                             </div>
 
                             <div class="row g-3">
-                                <div class="col-md-6">
-                                    <div class="d-flex justify-content-between mb-1">
-                                        <small>{{ $t("CPU") }}</small>
-                                        <small class="fw-bold">{{ service.CPUPerc }}</small>
+                                <!-- CPU -->
+                                <div class="col-12 col-md-6">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <small class="text-secondary text-nowrap me-2">{{ $t("CPU") }}</small>
+                                        <small class="fw-bold text-nowrap">{{ service.CPUPerc }}</small>
                                     </div>
                                     <div class="progress">
                                         <div
@@ -58,10 +79,16 @@
                                     </div>
                                 </div>
 
-                                <div class="col-md-6">
-                                    <div class="d-flex justify-content-between mb-1">
-                                        <small>{{ $t("Memory") }}</small>
-                                        <small class="fw-bold">{{ service.MemPerc }} ({{ service.MemUsage }})</small>
+                                <!-- Memory -->
+                                <div class="col-12 col-md-6">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <small class="text-secondary text-nowrap me-2">{{ $t("Memory") }}</small>
+                                        <small class="fw-bold text-nowrap">
+                                            {{ service.MemPerc }}
+                                            <span class="text-secondary fw-normal ms-1 d-none d-sm-inline" style="font-size: 0.7rem">
+                                                ({{ service.MemUsage }})
+                                            </span>
+                                        </small>
                                     </div>
                                     <div class="progress">
                                         <div
@@ -73,25 +100,27 @@
                                     </div>
                                 </div>
 
-                                <div class="col-md-6">
-                                    <div class="d-flex align-items-center">
-                                        <font-awesome-icon icon="network-wired" class="me-2 text-secondary" />
+                                <!-- Network -->
+                                <div class="col-12 col-sm-6">
+                                    <div class="d-flex align-items-center text-nowrap mt-1">
+                                        <font-awesome-icon icon="network-wired" class="me-2 text-secondary opacity-75" />
                                         <small class="me-3">
-                                            <font-awesome-icon icon="arrow-down" class="me-1 text-success" />
+                                            <font-awesome-icon icon="arrow-down" class="me-1 text-success opacity-75" />
                                             {{ getNetIOPart(service.NetIO, 0) }}
                                         </small>
                                         <small>
-                                            <font-awesome-icon icon="arrow-up" class="me-1 text-primary" />
+                                            <font-awesome-icon icon="arrow-up" class="me-1 text-primary opacity-75" />
                                             {{ getNetIOPart(service.NetIO, 1) }}
                                         </small>
                                     </div>
                                 </div>
 
-                                <div class="col-md-6">
-                                    <div class="d-flex align-items-center">
-                                        <font-awesome-icon icon="hdd" class="me-2 text-secondary" />
-                                        <small>
-                                            {{ $t("Disk IO") }}: {{ service.BlockIO || "0B / 0B" }}
+                                <!-- Disk I/O -->
+                                <div class="col-12 col-sm-6 text-sm-end">
+                                    <div class="d-inline-flex align-items-center text-nowrap mt-1">
+                                        <font-awesome-icon icon="hdd" class="me-2 text-secondary opacity-75" />
+                                        <small class="text-secondary">
+                                            {{ $t("Disk IO") }}: <span class="text-dark fw-500">{{ service.BlockIO || "0B / 0B" }}</span>
                                         </small>
                                     </div>
                                 </div>
@@ -105,17 +134,40 @@
 </template>
 
 <script>
-import { CREATED_STACK, EXITED, RUNNING } from "../../../common/util-common";
+import { CREATED_FILE, CREATED_STACK, EXITED, RUNNING } from "../../../common/util-common";
 
 export default {
     data() {
         return {
             stats: {},
             activeSubscriptions: new Set(),
+            hideInactive: false,
         };
     },
 
     computed: {
+        processedStackList() {
+            let list = Object.entries(this.$root.completeStackList).map(([id, stack]) => ({
+                id,
+                ...stack
+            }));
+
+            if (this.hideInactive) {
+                list = list.filter(stack => stack.status === RUNNING);
+            }
+
+            // Sort: 1. Status (Running first) 2. Name
+            return list.sort((a, b) => {
+                if (a.status === RUNNING && b.status !== RUNNING) return -1;
+                if (a.status !== RUNNING && b.status === RUNNING) return 1;
+
+                if (a.status === EXITED && (b.status === CREATED_STACK || b.status === CREATED_FILE)) return -1;
+                if ((a.status === CREATED_STACK || a.status === CREATED_FILE) && b.status === EXITED) return 1;
+
+                return a.name.localeCompare(b.name);
+            });
+        },
+
         stackSubscriptionSnapshot() {
             const list = this.$root.completeStackList;
             const snapshot = [];

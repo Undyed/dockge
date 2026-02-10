@@ -170,5 +170,6 @@
     "Network": "网络流量",
     "running": "运行中",
     "created": "已创建",
-    "unknown": "未知"
+    "unknown": "未知",
+    "hideInactiveStacks": "隐藏未启动的堆栈"
 }

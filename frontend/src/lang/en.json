@@ -171,5 +171,6 @@
     "Network": "Network Traffic",
     "running": "Running",
     "created": "Created",
-    "unknown": "Unknown"
+    "unknown": "Unknown",
+    "hideInactiveStacks": "Hide inactive stacks"
 }
