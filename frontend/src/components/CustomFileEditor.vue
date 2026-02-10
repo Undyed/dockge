@@ -13,13 +13,17 @@
                             {{ file.name }}{{ file.size ? " (" + formatFileSize(file.size) + ")" : "" }}
                         </option>
                     </select>
-                    <button class="btn btn-secondary" @click="showCustomInput = !showCustomInput">
-                        <font-awesome-icon icon="keyboard" class="me-1" />
-                        {{ $t("manual") }}
+                    <button class="btn btn-success" @click="showCustomInput = !showCustomInput">
+                        <font-awesome-icon icon="plus" class="me-1" />
+                        {{ $t("create") }}
                     </button>
                     <button class="btn btn-primary" :disabled="!selectedFile || isLoading" @click="loadFile">
                         <font-awesome-icon :icon="isLoading ? 'spinner' : 'edit'" :spin="isLoading" class="me-1" />
                         {{ $t("edit") }}
+                    </button>
+                    <button class="btn btn-danger" :disabled="!selectedFile || isLoading" @click="confirmDelete">
+                        <font-awesome-icon icon="trash" class="me-1" />
+                        {{ $t("delete") }}
                     </button>
                     <button class="btn btn-secondary" :disabled="isLoading" @click="loadFileList">
                         <font-awesome-icon :icon="isLoading ? 'spinner' : 'arrows-rotate'" :spin="isLoading" class="me-1" />
@@ -98,6 +102,10 @@
                 </div>
             </div>
         </BModal>
+
+        <Confirm ref="confirmDelete" :title="$t('deleteFile')" @yes="deleteFile">
+            {{ $t("deleteFileMsg", [selectedFile]) }}
+        </Confirm>
     </div>
 </template>
 
@@ -105,6 +113,7 @@
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { BModal } from "bootstrap-vue-next";
 import CodeEditor from "./CodeEditor.vue";
+import Confirm from "./Confirm.vue";
 
 export default {
     name: "CustomFileEditor",
@@ -112,6 +121,7 @@ export default {
         FontAwesomeIcon,
         BModal,
         CodeEditor,
+        Confirm,
     },
     props: {
         stackName: {
@@ -255,6 +265,28 @@ export default {
             this.$root.emitAgent(this.endpoint, "saveCustomFile", this.stackName, this.currentFile, this.fileContent, (res) => {
                 this.$root.toastRes(res);
                 if (res.ok) {
+                    this.loadFileList();
+                }
+            });
+        },
+
+        confirmDelete() {
+            if (this.selectedFile) {
+                this.$refs.confirmDelete.show();
+            }
+        },
+
+        deleteFile() {
+            if (!this.selectedFile) {
+                return;
+            }
+
+            this.isLoading = true;
+            this.$root.emitAgent(this.endpoint, "deleteCustomFile", this.stackName, this.selectedFile, (res) => {
+                this.isLoading = false;
+                this.$root.toastRes(res);
+                if (res.ok) {
+                    this.selectedFile = "";
                     this.loadFileList();
                 }
             });

@@ -145,5 +145,40 @@ export class FileSocketHandler extends AgentSocketHandler {
                 callbackError(e, callback);
             }
         });
+
+        // Delete custom file
+        agentSocket.on("deleteCustomFile", async (stackName: unknown, filePath: unknown, callback) => {
+            try {
+                checkLogin(socket);
+
+                if (typeof stackName !== "string") {
+                    throw new ValidationError("Stack name must be a string");
+                }
+                if (typeof filePath !== "string") {
+                    throw new ValidationError("File path must be a string");
+                }
+
+                const stackDir = resolveStackDir(stackName);
+                const resolvedPath = resolveStackFilePath(stackDir, filePath);
+
+                // Check if file exists
+                try {
+                    await fs.access(resolvedPath);
+                } catch (e) {
+                    throw new ValidationError("File does not exist");
+                }
+
+                // Delete file
+                await fs.unlink(resolvedPath);
+
+                callbackResult({
+                    ok: true,
+                    msg: "File deleted",
+                    msgi18n: true,
+                }, callback);
+            } catch (e) {
+                callbackError(e, callback);
+            }
+        });
     }
 }
