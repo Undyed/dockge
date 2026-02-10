@@ -91,14 +91,44 @@ export class Stack {
 
     /**
      * Get the status of the stack from `docker compose ps --format json`
+     * Handles both JSON array format and NDJSON (one JSON object per line) format
      */
-    async ps(): Promise<object> {
+    async ps(): Promise<object[]> {
         const dockerClient = DockerClient.getInstance();
-        let res = await dockerClient.composeExec([ "ps", "--format", "json" ], this.path);
+        let res = await dockerClient.composeExec(["ps", "--format", "json"], this.path);
         if (!res.stdout) {
-            return {};
+            return [];
         }
-        return JSON.parse(res.stdout.toString());
+
+        const stdout = res.stdout.toString().trim();
+        if (!stdout) {
+            return [];
+        }
+
+        // Try parsing as a single JSON array first
+        try {
+            const parsed = JSON.parse(stdout);
+            return Array.isArray(parsed) ? parsed : [parsed];
+        } catch (e) {
+            // If that fails, try parsing as NDJSON (one JSON object per line)
+            // This handles older docker compose versions or certain output formats
+            const lines = stdout.split("\n");
+            const results: object[] = [];
+
+            for (const line of lines) {
+                const trimmedLine = line.trim();
+                if (trimmedLine) {
+                    try {
+                        results.push(JSON.parse(trimmedLine));
+                    } catch (lineError) {
+                        // Skip invalid lines
+                        log.debug("ps", `Failed to parse line: ${trimmedLine}`);
+                    }
+                }
+            }
+
+            return results;
+        }
     }
 
     get isManagedByDockge(): boolean {
@@ -206,7 +236,7 @@ export class Stack {
 
     async deploy(socket: DockgeSocket): Promise<number> {
         const terminalName = getComposeTerminalName(socket.endpoint, this.name);
-        let exitCode = await Terminal.exec(this.server, socket, terminalName, "docker", [ "compose", "up", "-d", "--remove-orphans" ], this.path);
+        let exitCode = await Terminal.exec(this.server, socket, terminalName, "docker", ["compose", "up", "-d", "--remove-orphans"], this.path);
         if (exitCode !== 0) {
             throw new Error("Failed to deploy, please check the terminal output for more information.");
         }
@@ -215,7 +245,7 @@ export class Stack {
 
     async delete(socket: DockgeSocket): Promise<number> {
         const terminalName = getComposeTerminalName(socket.endpoint, this.name);
-        let exitCode = await Terminal.exec(this.server, socket, terminalName, "docker", [ "compose", "down", "--remove-orphans" ], this.path);
+        let exitCode = await Terminal.exec(this.server, socket, terminalName, "docker", ["compose", "down", "--remove-orphans"], this.path);
         if (exitCode !== 0) {
             throw new Error("Failed to delete, please check the terminal output for more information.");
         }
@@ -339,7 +369,7 @@ export class Stack {
 
         // Get status from docker compose ls
         const dockerClient = DockerClient.getInstance();
-        let res = await dockerClient.composeExec([ "ls", "--all", "--format", "json" ], process.cwd());
+        let res = await dockerClient.composeExec(["ls", "--all", "--format", "json"], process.cwd());
 
         if (!res.stdout) {
             return stackList;
@@ -375,7 +405,7 @@ export class Stack {
         let statusList = new Map<string, number>();
 
         const dockerClient = DockerClient.getInstance();
-        let res = await dockerClient.composeExec([ "ls", "--all", "--format", "json" ], process.cwd());
+        let res = await dockerClient.composeExec(["ls", "--all", "--format", "json"], process.cwd());
 
         if (!res.stdout) {
             return statusList;
@@ -444,7 +474,7 @@ export class Stack {
 
     async start(socket: DockgeSocket) {
         const terminalName = getComposeTerminalName(socket.endpoint, this.name);
-        let exitCode = await Terminal.exec(this.server, socket, terminalName, "docker", [ "compose", "up", "-d", "--remove-orphans" ], this.path);
+        let exitCode = await Terminal.exec(this.server, socket, terminalName, "docker", ["compose", "up", "-d", "--remove-orphans"], this.path);
         if (exitCode !== 0) {
             throw new Error("Failed to start, please check the terminal output for more information.");
         }
@@ -453,7 +483,7 @@ export class Stack {
 
     async stop(socket: DockgeSocket): Promise<number> {
         const terminalName = getComposeTerminalName(socket.endpoint, this.name);
-        let exitCode = await Terminal.exec(this.server, socket, terminalName, "docker", [ "compose", "stop" ], this.path);
+        let exitCode = await Terminal.exec(this.server, socket, terminalName, "docker", ["compose", "stop"], this.path);
         if (exitCode !== 0) {
             throw new Error("Failed to stop, please check the terminal output for more information.");
         }
@@ -462,7 +492,7 @@ export class Stack {
 
     async restart(socket: DockgeSocket): Promise<number> {
         const terminalName = getComposeTerminalName(socket.endpoint, this.name);
-        let exitCode = await Terminal.exec(this.server, socket, terminalName, "docker", [ "compose", "restart" ], this.path);
+        let exitCode = await Terminal.exec(this.server, socket, terminalName, "docker", ["compose", "restart"], this.path);
         if (exitCode !== 0) {
             throw new Error("Failed to restart, please check the terminal output for more information.");
         }
@@ -471,7 +501,7 @@ export class Stack {
 
     async down(socket: DockgeSocket): Promise<number> {
         const terminalName = getComposeTerminalName(socket.endpoint, this.name);
-        let exitCode = await Terminal.exec(this.server, socket, terminalName, "docker", [ "compose", "down" ], this.path);
+        let exitCode = await Terminal.exec(this.server, socket, terminalName, "docker", ["compose", "down"], this.path);
         if (exitCode !== 0) {
             throw new Error("Failed to down, please check the terminal output for more information.");
         }
@@ -480,7 +510,7 @@ export class Stack {
 
     async update(socket: DockgeSocket) {
         const terminalName = getComposeTerminalName(socket.endpoint, this.name);
-        let exitCode = await Terminal.exec(this.server, socket, terminalName, "docker", [ "compose", "pull" ], this.path);
+        let exitCode = await Terminal.exec(this.server, socket, terminalName, "docker", ["compose", "pull"], this.path);
         if (exitCode !== 0) {
             throw new Error("Failed to pull, please check the terminal output for more information.");
         }
@@ -492,7 +522,7 @@ export class Stack {
             return exitCode;
         }
 
-        exitCode = await Terminal.exec(this.server, socket, terminalName, "docker", [ "compose", "up", "-d", "--remove-orphans" ], this.path);
+        exitCode = await Terminal.exec(this.server, socket, terminalName, "docker", ["compose", "up", "-d", "--remove-orphans"], this.path);
         if (exitCode !== 0) {
             throw new Error("Failed to restart, please check the terminal output for more information.");
         }
@@ -501,7 +531,7 @@ export class Stack {
 
     async joinCombinedTerminal(socket: DockgeSocket) {
         const terminalName = getCombinedTerminalName(socket.endpoint, this.name);
-        const terminal = Terminal.getOrCreateTerminal(this.server, terminalName, "docker", [ "compose", "logs", "-f", "--tail", "100" ], this.path);
+        const terminal = Terminal.getOrCreateTerminal(this.server, terminalName, "docker", ["compose", "logs", "-f", "--tail", "100"], this.path);
         terminal.enableKeepAlive = true;
         terminal.rows = COMBINED_TERMINAL_ROWS;
         terminal.cols = COMBINED_TERMINAL_COLS;
@@ -525,7 +555,7 @@ export class Stack {
         let terminal = Terminal.getTerminal(terminalName);
 
         if (!terminal) {
-            terminal = new InteractiveTerminal(this.server, terminalName, "docker", [ "compose", "exec", serviceName, shell ], this.path);
+            terminal = new InteractiveTerminal(this.server, terminalName, "docker", ["compose", "exec", serviceName, shell], this.path);
             terminal.rows = TERMINAL_ROWS;
             log.debug("joinContainerTerminal", "Terminal created");
         }
@@ -541,7 +571,7 @@ export class Stack {
 
         try {
             const dockerClient = DockerClient.getInstance();
-            let res = await dockerClient.composeExec([ "ps", "--format", "json" ], this.path);
+            let res = await dockerClient.composeExec(["ps", "--format", "json"], this.path);
 
             if (!res.stdout) {
                 return statusList;

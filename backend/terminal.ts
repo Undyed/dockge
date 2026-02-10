@@ -135,13 +135,11 @@ export class Terminal {
                     socket.emitAgent("terminalWrite", this.name, data);
                 }
 
-                // subscription-mode: 只在有订阅者时才发布，避免无意义的性能开销
-                if (this.eventPublisher.hasActiveSubscribers(this.topicName)) {
-                    this.eventPublisher.publish(this.topicName, "terminalWrite", {
-                        terminalName: this.name,
-                        data,
-                    });
-                }
+                // subscription-mode: 使用 EventPublisher 发布事件
+                this.eventPublisher.publish(this.topicName, "terminalWrite", {
+                    terminalName: this.name,
+                    data,
+                });
             });
 
             // On Exit
@@ -168,6 +166,13 @@ export class Terminal {
             const socket = this.socketList[socketID];
             socket.emitAgent("terminalExit", this.name, res.exitCode);
         }
+
+        // subscription-mode: 发布退出事件
+        this.eventPublisher.publish(this.topicName, "terminalExit", {
+            terminalName: this.name,
+            exitCode: res.exitCode,
+            timestamp: Date.now(),
+        });
 
         // Remove all clients
         this.socketList = {};

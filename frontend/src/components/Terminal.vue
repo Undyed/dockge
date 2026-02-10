@@ -137,6 +137,15 @@ export default {
         this.terminal.dispose();
     },
 
+    watch: {
+        name() {
+            this.bind();
+        },
+        endpoint() {
+            this.bind();
+        }
+    },
+
     methods: {
         bind(endpoint, name) {
             // Workaround: normally this.name should be set, but it is not sometimes, so we use the parameter, but eventually this.name and name must be the same name
