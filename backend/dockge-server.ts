@@ -43,6 +43,7 @@ import { DockerClient } from "./docker-client";
 
 import type { SubscriptionIntegration } from "./subscription-integration";
 import { DockerEventMonitor } from "./docker-event-monitor";
+import { StatsProvider } from "./stats-provider";
 
 interface ServerInfo {
     version?: string;
@@ -63,6 +64,7 @@ export class DockgeServer {
     io: socketIO.Server;
     config: Config;
     indexHTML: string = "";
+    statsProvider: import("./stats-provider").StatsProvider;
 
     /**
      * List of express routers
@@ -121,6 +123,7 @@ export class DockgeServer {
         process.addListener("uncaughtException", unexpectedErrorHandler);
 
         this.dockerEventMonitor = new DockerEventMonitor(this);
+        this.statsProvider = new StatsProvider(this);
 
         if (!process.env.NODE_ENV) {
             process.env.NODE_ENV = "production";

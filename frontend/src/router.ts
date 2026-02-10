@@ -7,6 +7,7 @@ import DashboardHome from "./pages/DashboardHome.vue";
 import Console from "./pages/Console.vue";
 import Compose from "./pages/Compose.vue";
 import ContainerTerminal from "./pages/ContainerTerminal.vue";
+import Status from "./pages/Status.vue";
 
 const Settings = () => import("./pages/Settings.vue");
 
@@ -59,6 +60,11 @@ const routes = [
                                 meta: { title: "Terminal" },
                             },
                         ]
+                    },
+                    {
+                        path: "/status",
+                        component: Status,
+                        meta: { title: "Status" },
                     },
                     {
                         path: "/console",

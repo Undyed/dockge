@@ -6,10 +6,10 @@ import { AgentSocket } from "../../common/agent-socket";
 import { log } from "../log";
 
 export class DockerSocketHandler extends AgentSocketHandler {
-    create(socket : DockgeSocket, server : DockgeServer, agentSocket : AgentSocket) {
+    create(socket: DockgeSocket, server: DockgeServer, agentSocket: AgentSocket) {
         // Do not call super.create()
 
-        agentSocket.on("deployStack", async (name : unknown, composeYAML : unknown, composeENV : unknown, isAdd : unknown, callback) => {
+        agentSocket.on("deployStack", async (name: unknown, composeYAML: unknown, composeENV: unknown, isAdd: unknown, callback) => {
             try {
                 checkLogin(socket);
                 const stack = await this.saveStack(server, name, composeYAML, composeENV, isAdd);
@@ -26,7 +26,7 @@ export class DockerSocketHandler extends AgentSocketHandler {
             }
         });
 
-        agentSocket.on("saveStack", async (name : unknown, composeYAML : unknown, composeENV : unknown, isAdd : unknown, callback) => {
+        agentSocket.on("saveStack", async (name: unknown, composeYAML: unknown, composeENV: unknown, isAdd: unknown, callback) => {
             try {
                 checkLogin(socket);
                 await this.saveStack(server, name, composeYAML, composeENV, isAdd);
@@ -41,10 +41,10 @@ export class DockerSocketHandler extends AgentSocketHandler {
             }
         });
 
-        agentSocket.on("deleteStack", async (name : unknown, callback) => {
+        agentSocket.on("deleteStack", async (name: unknown, callback) => {
             try {
                 checkLogin(socket);
-                if (typeof(name) !== "string") {
+                if (typeof (name) !== "string") {
                     throw new ValidationError("Name must be a string");
                 }
                 const stack = await Stack.getStack(server, name);
@@ -68,11 +68,11 @@ export class DockerSocketHandler extends AgentSocketHandler {
             }
         });
 
-        agentSocket.on("getStack", async (stackName : unknown, callback) => {
+        agentSocket.on("getStack", async (stackName: unknown, callback) => {
             try {
                 checkLogin(socket);
 
-                if (typeof(stackName) !== "string") {
+                if (typeof (stackName) !== "string") {
                     throw new ValidationError("Stack name must be a string");
                 }
 
@@ -110,11 +110,11 @@ export class DockerSocketHandler extends AgentSocketHandler {
         });
 
         // startStack
-        agentSocket.on("startStack", async (stackName : unknown, callback) => {
+        agentSocket.on("startStack", async (stackName: unknown, callback) => {
             try {
                 checkLogin(socket);
 
-                if (typeof(stackName) !== "string") {
+                if (typeof (stackName) !== "string") {
                     throw new ValidationError("Stack name must be a string");
                 }
 
@@ -135,11 +135,11 @@ export class DockerSocketHandler extends AgentSocketHandler {
         });
 
         // stopStack
-        agentSocket.on("stopStack", async (stackName : unknown, callback) => {
+        agentSocket.on("stopStack", async (stackName: unknown, callback) => {
             try {
                 checkLogin(socket);
 
-                if (typeof(stackName) !== "string") {
+                if (typeof (stackName) !== "string") {
                     throw new ValidationError("Stack name must be a string");
                 }
 
@@ -157,11 +157,11 @@ export class DockerSocketHandler extends AgentSocketHandler {
         });
 
         // restartStack
-        agentSocket.on("restartStack", async (stackName : unknown, callback) => {
+        agentSocket.on("restartStack", async (stackName: unknown, callback) => {
             try {
                 checkLogin(socket);
 
-                if (typeof(stackName) !== "string") {
+                if (typeof (stackName) !== "string") {
                     throw new ValidationError("Stack name must be a string");
                 }
 
@@ -179,11 +179,11 @@ export class DockerSocketHandler extends AgentSocketHandler {
         });
 
         // updateStack
-        agentSocket.on("updateStack", async (stackName : unknown, callback) => {
+        agentSocket.on("updateStack", async (stackName: unknown, callback) => {
             try {
                 checkLogin(socket);
 
-                if (typeof(stackName) !== "string") {
+                if (typeof (stackName) !== "string") {
                     throw new ValidationError("Stack name must be a string");
                 }
 
@@ -201,11 +201,11 @@ export class DockerSocketHandler extends AgentSocketHandler {
         });
 
         // down stack
-        agentSocket.on("downStack", async (stackName : unknown, callback) => {
+        agentSocket.on("downStack", async (stackName: unknown, callback) => {
             try {
                 checkLogin(socket);
 
-                if (typeof(stackName) !== "string") {
+                if (typeof (stackName) !== "string") {
                     throw new ValidationError("Stack name must be a string");
                 }
 
@@ -223,11 +223,11 @@ export class DockerSocketHandler extends AgentSocketHandler {
         });
 
         // Services status
-        agentSocket.on("serviceStatusList", async (stackName : unknown, callback) => {
+        agentSocket.on("serviceStatusList", async (stackName: unknown, callback) => {
             try {
                 checkLogin(socket);
 
-                if (typeof(stackName) !== "string") {
+                if (typeof (stackName) !== "string") {
                     throw new ValidationError("Stack name must be a string");
                 }
 
@@ -242,7 +242,7 @@ export class DockerSocketHandler extends AgentSocketHandler {
             }
         });
 
-        // getExternalNetworkList
+        // getDockerNetworkList
         agentSocket.on("getDockerNetworkList", async (callback) => {
             try {
                 checkLogin(socket);
@@ -255,20 +255,44 @@ export class DockerSocketHandler extends AgentSocketHandler {
                 callbackError(e, callback);
             }
         });
+
+        // subscribeStackStats
+        agentSocket.on("subscribeStackStats", async (stackName: unknown) => {
+            try {
+                checkLogin(socket);
+                if (typeof (stackName) === "string") {
+                    server.statsProvider.subscribe(socket, stackName);
+                }
+            } catch (e) {
+                log.warn("docker-socket-handler", "subscribeStackStats error: " + (e instanceof Error ? e.message : String(e)));
+            }
+        });
+
+        // unsubscribeStackStats
+        agentSocket.on("unsubscribeStackStats", async (stackName: unknown) => {
+            try {
+                checkLogin(socket);
+                if (typeof (stackName) === "string") {
+                    server.statsProvider.unsubscribe(socket, stackName);
+                }
+            } catch (e) {
+                log.warn("docker-socket-handler", "unsubscribeStackStats error: " + (e instanceof Error ? e.message : String(e)));
+            }
+        });
     }
 
-    async saveStack(server : DockgeServer, name : unknown, composeYAML : unknown, composeENV : unknown, isAdd : unknown) : Promise<Stack> {
+    async saveStack(server: DockgeServer, name: unknown, composeYAML: unknown, composeENV: unknown, isAdd: unknown): Promise<Stack> {
         // Check types
-        if (typeof(name) !== "string") {
+        if (typeof (name) !== "string") {
             throw new ValidationError("Name must be a string");
         }
-        if (typeof(composeYAML) !== "string") {
+        if (typeof (composeYAML) !== "string") {
             throw new ValidationError("Compose YAML must be a string");
         }
-        if (typeof(composeENV) !== "string") {
+        if (typeof (composeENV) !== "string") {
             throw new ValidationError("Compose ENV must be a string");
         }
-        if (typeof(isAdd) !== "boolean") {
+        if (typeof (isAdd) !== "boolean") {
             throw new ValidationError("isAdd must be a boolean");
         }
 

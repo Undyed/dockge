@@ -159,5 +159,16 @@
     "confirmLeaveStack": "您正在编辑堆栈。确定要离开吗？",
     "delete": "删除",
     "deleteFile": "删除文件",
-    "deleteFileMsg": "您确定要删除 {0} 吗？"
+    "deleteFileMsg": "您确定要删除 {0} 吗？",
+    "serviceStatus": "服务状态监控",
+    "status": "状态",
+    "noStacksMonitor": "暂无需要监控的堆栈项目。",
+    "loadingStats": "正在获取实时指标...",
+    "CPU": "CPU 使用率",
+    "Memory": "内存占用",
+    "Disk IO": "磁盘 I/O",
+    "Network": "网络流量",
+    "running": "运行中",
+    "created": "已创建",
+    "unknown": "未知"
 }

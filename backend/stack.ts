@@ -131,6 +131,52 @@ export class Stack {
         }
     }
 
+    /**
+     * Get the statistics of the stack from `docker compose stats --no-stream --format json`
+     * Handles both JSON array format and NDJSON (one JSON object per line) format
+     */
+    async stats(): Promise<object[]> {
+        const dockerClient = DockerClient.getInstance();
+        try {
+            let res = await dockerClient.composeExec(["stats", "--no-stream", "--format", "json"], this.path);
+            if (!res.stdout) {
+                return [];
+            }
+
+            const stdout = res.stdout.toString().trim();
+            if (!stdout) {
+                return [];
+            }
+
+            // Try parsing as a single JSON array first
+            try {
+                const parsed = JSON.parse(stdout);
+                return Array.isArray(parsed) ? parsed : [parsed];
+            } catch (e) {
+                // If that fails, try parsing as NDJSON (one JSON object per line)
+                const lines = stdout.split("\n");
+                const results: object[] = [];
+
+                for (const line of lines) {
+                    const trimmedLine = line.trim();
+                    if (trimmedLine) {
+                        try {
+                            results.push(JSON.parse(trimmedLine));
+                        } catch (lineError) {
+                            // Skip invalid lines
+                            log.debug("stats", `Failed to parse line: ${trimmedLine}`);
+                        }
+                    }
+                }
+
+                return results;
+            }
+        } catch (e) {
+            log.error("stack", "Failed to get stats for " + this.name + ": " + (e instanceof Error ? e.message : String(e)));
+            return [];
+        }
+    }
+
     get isManagedByDockge(): boolean {
         return fs.existsSync(this.path) && fs.statSync(this.path).isDirectory();
     }

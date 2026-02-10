@@ -160,5 +160,16 @@
     "largeFileUsePlainEditor": "File is too large. Using plain text editor for better performance.",
     "delete": "Delete",
     "deleteFile": "Delete File",
-    "deleteFileMsg": "Are you sure you want to delete {0}?"
+    "deleteFileMsg": "Are you sure you want to delete {0}?",
+    "serviceStatus": "Service Status Monitoring",
+    "status": "Status",
+    "noStacksMonitor": "No stacks available to monitor.",
+    "loadingStats": "Fetching real-time metrics...",
+    "CPU": "CPU Usage",
+    "Memory": "Memory Usage",
+    "Disk IO": "Disk I/O",
+    "Network": "Network Traffic",
+    "running": "Running",
+    "created": "Created",
+    "unknown": "Unknown"
 }
