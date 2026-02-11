@@ -6,6 +6,7 @@ import { SubscriptionTerminal } from "../terminal-subscription";
 import { Stack } from "../stack";
 import { AgentSocketHandler } from "../agent-socket-handler";
 import { AgentSocket } from "../../common/agent-socket";
+import { EventPublisher } from "../event-publisher";
 
 export class TerminalSocketHandler extends AgentSocketHandler {
     create(socket: DockgeSocket, server: DockgeServer, agentSocket: AgentSocket) {
@@ -143,7 +144,21 @@ export class TerminalSocketHandler extends AgentSocketHandler {
                     log.debug("terminalJoin", `Joined SubscriptionTerminal: ${terminalName}`);
                 } else {
                     // 回退到 Legacy Terminal
-                    buffer = Terminal.getTerminal(terminalName)?.getBuffer() ?? "";
+                    const terminal = Terminal.getTerminal(terminalName);
+                    buffer = terminal?.getBuffer() ?? "";
+
+                    if (terminal) {
+                        // 同时将 socket 加入终端，以便接收后续数据
+                        if (!socket.clientFeatures?.includes("subscription-mode")) {
+                            terminal.join(socket);
+                        } else {
+                            // subscription-mode 下，前端由于兼容性可能也会调用 terminalJoin
+                            // 我们也需要确保它能通过订阅获取到后续内容
+                            const topic = `terminal:${terminalName}`;
+                            EventPublisher.getInstance().subscribe(topic, socket);
+                        }
+                    }
+
                     if (!buffer) {
                         log.debug("terminalJoin", "No buffer found for terminal: " + terminalName);
                     }
