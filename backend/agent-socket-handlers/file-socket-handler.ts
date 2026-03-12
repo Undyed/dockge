@@ -112,8 +112,12 @@ export class FileSocketHandler extends AgentSocketHandler {
                 try {
                     await fs.access(stackDir);
                 } catch (e) {
-                    log.warn("file-socket-handler", `Stack directory does not exist: ${stackDir}`);
-                    throw new ValidationError("Stack directory does not exist");
+                    log.debug("file-socket-handler", `Stack directory does not exist: ${stackDir}`);
+                    return callbackResult({
+                        ok: true,
+                        exists: false,
+                        files: [],
+                    }, callback);
                 }
 
                 // Read directory contents
@@ -138,6 +142,7 @@ export class FileSocketHandler extends AgentSocketHandler {
                 log.debug("file-socket-handler", `Returning ${fileList.length} files`);
                 callbackResult({
                     ok: true,
+                    exists: true,
                     files: fileList,
                 }, callback);
             } catch (e) {

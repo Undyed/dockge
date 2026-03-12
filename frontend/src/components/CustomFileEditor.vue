@@ -1,6 +1,12 @@
 <template>
     <div v-if="isEditMode" class="custom-file-editor">
-        <h4 class="mb-3">{{ $t("customFiles") }}</h4>
+        <div class="d-flex align-items-center mb-3">
+            <h4 class="mb-0">{{ $t("customFiles") }}</h4>
+            <span v-if="isAdd && stackExists" class="badge bg-warning text-dark ms-2">
+                <font-awesome-icon icon="info-circle" class="me-1" />
+                {{ $t("stackDirectoryExists") }}
+            </span>
+        </div>
 
         <!-- File selector -->
         <div class="shadow-box big-padding mb-3">
@@ -136,6 +142,10 @@ export default {
             type: Boolean,
             default: false,
         },
+        isAdd: {
+            type: Boolean,
+            default: false,
+        },
     },
     data() {
         return {
@@ -149,6 +159,8 @@ export default {
             isLoading: false,
             fileSize: 0,
             highlightDebounceTimer: null,
+            loadFileListTimer: null,
+            stackExists: false,
         };
     },
     computed: {
@@ -173,7 +185,13 @@ export default {
         stackName(newVal) {
             console.log("stackName changed:", newVal);
             if (newVal && this.isEditMode) {
-                this.loadFileList();
+                // Debounce loading file list
+                if (this.loadFileListTimer) {
+                    clearTimeout(this.loadFileListTimer);
+                }
+                this.loadFileListTimer = setTimeout(() => {
+                    this.loadFileList();
+                }, 500);
             }
         },
     },
@@ -187,10 +205,17 @@ export default {
             this.loadFileList();
         }
     },
+    unmounted() {
+        if (this.loadFileListTimer) {
+            clearTimeout(this.loadFileListTimer);
+        }
+    },
     methods: {
         loadFileList() {
             if (!this.stackName) {
                 console.warn("Cannot load file list: stackName is empty");
+                this.fileList = [];
+                this.stackExists = false;
                 return;
             }
 
@@ -201,9 +226,11 @@ export default {
                 this.isLoading = false;
                 if (res.ok) {
                     this.fileList = res.files || [];
-                    console.log("File list loaded:", this.fileList);
+                    this.stackExists = !!res.exists;
+                    console.log("File list loaded:", this.fileList, "Exists:", this.stackExists);
                 } else {
                     console.error("Failed to load file list:", res);
+                    this.stackExists = false;
                     this.$root.toastRes(res);
                 }
             });
@@ -240,7 +267,7 @@ export default {
                     this.currentFile = res.filePath;
                     this.fileContent = res.content;
                     this.selectedFile = res.filePath;
-                    this.fileSize = res.size || new Blob([res.content]).size;
+                    this.fileSize = res.size || new Blob([ res.content ]).size;
                     this.showEditor = true;
 
                     // 大文件警告
@@ -320,12 +347,18 @@ export default {
                 clearTimeout(this.highlightDebounceTimer);
                 this.highlightDebounceTimer = null;
             }
+            if (this.loadFileListTimer) {
+                clearTimeout(this.loadFileListTimer);
+                this.loadFileListTimer = null;
+            }
         },
 
         formatFileSize(bytes) {
-            if (bytes === 0) return "0 B";
+            if (bytes === 0) {
+                return "0 B";
+            }
             const k = 1024;
-            const sizes = ["B", "KB", "MB", "GB"];
+            const sizes = [ "B", "KB", "MB", "GB" ];
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return Math.round(bytes / Math.pow(k, i) * 100) / 100 + " " + sizes[i];
         },

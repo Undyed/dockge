@@ -140,6 +140,7 @@
     "ConsoleNotEnabledMSG3": "If you understand the risk, you can enable it by setting <code>DOCKGE_ENABLE_CONSOLE=true</code> in the environment variables.",
     "confirmLeaveStack": "You are currently editing a stack. Are you sure you want to leave?",
     "customFiles": "Custom Files",
+    "stackDirectoryExists": "Stack directory already exists",
     "selectOrEnterFile": "Select or Enter File",
     "selectFile": "-- Select a file --",
     "customFilePath": "Custom File Path",

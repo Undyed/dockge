@@ -134,6 +134,7 @@
     "NoNetworksAvailable": "网络不可用.你需要在正确的方向先添加内部网络或者启用外部网络.",
     "Downed": "已宕机",
     "customFiles": "自定义文件",
+    "stackDirectoryExists": "堆栈目录已存在",
     "selectOrEnterFile": "选择或输入文件",
     "selectFile": "-- 选择文件 --",
     "customFilePath": "自定义文件路径",

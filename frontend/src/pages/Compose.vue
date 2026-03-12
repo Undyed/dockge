@@ -226,6 +226,7 @@
                             :stack-name="stack.name"
                             :endpoint="endpoint"
                             :is-edit-mode="isEditMode"
+                            :is-add="isAdd"
                         />
                     </div>
                 </div>
