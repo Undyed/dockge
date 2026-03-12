@@ -4,6 +4,7 @@ import { callbackError, callbackResult, checkLogin, DockgeSocket, ValidationErro
 import { Stack } from "../stack";
 import { AgentSocket } from "../../common/agent-socket";
 import { log } from "../log";
+import { getDomainsFromStack, StackDomainInfo } from "../util-domain";
 
 export class DockerSocketHandler extends AgentSocketHandler {
     create(socket: DockgeSocket, server: DockgeServer, agentSocket: AgentSocket) {
@@ -85,6 +86,39 @@ export class DockerSocketHandler extends AgentSocketHandler {
                 callbackResult({
                     ok: true,
                     stack: await stack.toJSON(socket.endpoint),
+                }, callback);
+            } catch (e) {
+                callbackError(e, callback);
+            }
+        });
+
+        agentSocket.on("getDomainList", async (callback) => {
+            try {
+                checkLogin(socket);
+
+                const list: Array<StackDomainInfo & { status: number }> = [];
+                const stacks = await Stack.getStackList(server);
+
+                for (const stack of stacks.values()) {
+                    let domainInfo: StackDomainInfo = {
+                        stackName: stack.name,
+                        services: [],
+                    };
+
+                    const yamlContent = stack.composeYAML;
+                    if (yamlContent) {
+                        domainInfo = getDomainsFromStack(stack.name, yamlContent);
+                    }
+
+                    list.push({
+                        ...domainInfo,
+                        status: stack.status,
+                    });
+                }
+
+                callbackResult({
+                    ok: true,
+                    domains: list,
                 }, callback);
             } catch (e) {
                 callbackError(e, callback);

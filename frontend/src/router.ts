@@ -8,6 +8,7 @@ import Console from "./pages/Console.vue";
 import Compose from "./pages/Compose.vue";
 import ContainerTerminal from "./pages/ContainerTerminal.vue";
 import Status from "./pages/Status.vue";
+import Domains from "./pages/Domains.vue";
 
 const Settings = () => import("./pages/Settings.vue");
 
@@ -65,6 +66,11 @@ const routes = [
                         path: "/status",
                         component: Status,
                         meta: { title: "Status" },
+                    },
+                    {
+                        path: "/domains",
+                        component: Domains,
+                        meta: { title: "Domains" },
                     },
                     {
                         path: "/console",

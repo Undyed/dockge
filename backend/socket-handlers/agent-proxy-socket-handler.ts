@@ -1,7 +1,7 @@
 import { SocketHandler } from "../socket-handler.js";
 import { DockgeServer } from "../dockge-server";
 import { log } from "../log";
-import { checkLogin, DockgeSocket } from "../util-server";
+import { callbackError, checkLogin, DockgeSocket } from "../util-server";
 import { AgentSocket } from "../../common/agent-socket";
 import { ALL_ENDPOINTS } from "../../common/util-common";
 
@@ -40,6 +40,7 @@ export class AgentProxySocketHandler extends SocketHandler {
                     await socket.instanceManager.emitToEndpoint(endpoint, eventName, ...args);
                 }
             } catch (e) {
+                callbackError(e, args.at(-1));
                 if (e instanceof Error) {
                     log.warn("agent", e.message);
                 }

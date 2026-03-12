@@ -34,6 +34,12 @@
                 </li>
 
                 <li v-if="$root.loggedIn" class="nav-item me-2">
+                    <router-link to="/domains" class="nav-link">
+                        <font-awesome-icon icon="globe" /> {{ $t("domains") }}
+                    </router-link>
+                </li>
+
+                <li v-if="$root.loggedIn" class="nav-item me-2">
                     <router-link to="/console" class="nav-link">
                         <font-awesome-icon icon="terminal" /> {{ $t("console") }}
                     </router-link>
@@ -177,7 +183,7 @@ header {
     .dark & {
         background-color: rgba($dark-header-bg, 0.85);
         border-bottom-color: rgba(255, 255, 255, 0.1) !important;
-        
+
         span {
             color: $dark-font-color2;
         }
@@ -277,7 +283,7 @@ main {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     display: inline-block;
-    
+
     // Fallback for dark mode logo text if needed, but gradient usually works
 }
 
@@ -319,7 +325,7 @@ main {
 
         .dark & {
             background-color: rgba(255, 255, 255, 0.05);
-            
+
             &:hover {
                 background-color: rgba(255, 255, 255, 0.1);
                 border-color: rgba(255,255,255,0.05);
@@ -354,7 +360,7 @@ main {
             padding: 0.6rem 1rem;
             border-radius: 0.5rem;
             font-size: 0.95rem;
-            
+
             &:hover {
                 background-color: $highlight-white;
                 color: $primary;
@@ -373,7 +379,7 @@ main {
 
             .dropdown-item-text {
                 color: $dark-font-color3;
-                
+
                 strong { color: $dark-font-color2; }
             }
 
