@@ -1,5 +1,10 @@
 <template>
-    <div class="shadow-box">
+    <div class="shadow-box terminal-shell">
+        <div v-if="showClipboardToolbar" class="shortcut-hint-row">
+            <small class="shortcut-hint">
+                {{ $t("terminalShortcutTips", [ interruptShortcutLabel, copyShortcutLabel, pasteShortcutLabel ]) }}
+            </small>
+        </div>
         <div v-pre ref="terminal" class="main-terminal"></div>
     </div>
 </template>
@@ -20,22 +25,24 @@ export default {
     props: {
         name: {
             type: String,
-            require: true,
+            required: true,
         },
 
         endpoint: {
             type: String,
-            require: true,
+            required: true,
         },
 
         // Require if mode is interactive
         stackName: {
             type: String,
+            default: "",
         },
 
         // Require if mode is interactive
         serviceName: {
             type: String,
+            default: "",
         },
 
         // Require if mode is interactive
@@ -67,13 +74,39 @@ export default {
     data() {
         return {
             first: true,
+            hasSelection: false,
             terminalInputBuffer: "",
             cursorPosition: 0,
         };
     },
+    computed: {
+        showClipboardToolbar() {
+            return this.mode === "interactive";
+        },
+        interruptShortcutLabel() {
+            return "Ctrl+C";
+        },
+        copyShortcutLabel() {
+            return this.isMacPlatform() ? "Cmd+C" : "Ctrl+Shift+C";
+        },
+        pasteShortcutLabel() {
+            return this.isMacPlatform() ? "Cmd+V" : "Ctrl+V";
+        }
+    },
+
+    watch: {
+        name() {
+            this.bind();
+        },
+        endpoint() {
+            this.bind();
+        }
+    },
+
     created() {
 
     },
+
     mounted() {
         let cursorBlink = true;
 
@@ -109,6 +142,9 @@ export default {
                 this.first = false;
             }
         });
+        this.terminal.onSelectionChange(() => {
+            this.hasSelection = this.terminal.hasSelection();
+        });
 
         this.bind();
 
@@ -135,15 +171,6 @@ export default {
         window.removeEventListener("resize", this.onResizeEvent); // Remove the resize event listener from the window object.
         this.$root.unbindTerminal(this.name);
         this.terminal.dispose();
-    },
-
-    watch: {
-        name() {
-            this.bind();
-        },
-        endpoint() {
-            this.bind();
-        }
     },
 
     methods: {
@@ -216,13 +243,129 @@ export default {
         },
 
         interactiveTerminalConfig() {
-            this.terminal.onKey(e => {
-                this.$root.emitAgent(this.endpoint, "terminalInput", this.name, e.key, (res) => {
+            this.terminal.attachCustomKeyEventHandler((event) => this.handleInteractiveShortcut(event));
+            this.terminal.onData((data) => {
+                this.$root.emitAgent(this.endpoint, "terminalInput", this.name, data, (res) => {
                     if (!res.ok) {
                         this.$root.toastRes(res);
                     }
                 });
             });
+        },
+
+        isMacPlatform() {
+            if (typeof navigator === "undefined") {
+                return false;
+            }
+
+            let platform = navigator.platform || "";
+            if (navigator.userAgentData?.platform) {
+                platform = navigator.userAgentData.platform;
+            }
+
+            return /Mac|iPhone|iPad|iPod/i.test(platform);
+        },
+
+        handleInteractiveShortcut(event) {
+            if (event.type !== "keydown" || this.mode !== "interactive") {
+                return true;
+            }
+
+            const isMac = this.isMacPlatform();
+            const key = event.key.toLowerCase();
+
+            if (isMac && event.metaKey && !event.ctrlKey && !event.altKey && key === "c") {
+                event.preventDefault();
+                event.stopPropagation();
+
+                if (this.hasSelection) {
+                    void this.copySelection();
+                }
+
+                return false;
+            }
+
+            if (isMac && event.metaKey && !event.ctrlKey && !event.altKey && key === "v") {
+                event.preventDefault();
+                event.stopPropagation();
+                void this.pasteFromClipboard();
+                return false;
+            }
+
+            if (!isMac && event.ctrlKey && event.shiftKey && !event.altKey && key === "c") {
+                event.preventDefault();
+                event.stopPropagation();
+
+                if (this.hasSelection) {
+                    void this.copySelection();
+                }
+
+                return false;
+            }
+
+            if (!isMac && event.ctrlKey && !event.shiftKey && !event.altKey && key === "v") {
+                event.preventDefault();
+                event.stopPropagation();
+                void this.pasteFromClipboard();
+                return false;
+            }
+
+            return true;
+        },
+
+        async copySelection() {
+            const selection = this.terminal.getSelection();
+            if (!selection) {
+                return;
+            }
+
+            try {
+                await this.writeTextToClipboard(selection);
+                this.terminal.focus();
+            } catch (error) {
+                console.error("Failed to write clipboard:", error);
+                this.$root.toastError("ClipboardWriteFailed");
+            }
+        },
+
+        async pasteFromClipboard() {
+            try {
+                if (!navigator.clipboard?.readText) {
+                    throw new Error("navigator.clipboard.readText is unavailable");
+                }
+
+                const text = await navigator.clipboard.readText();
+                if (text) {
+                    this.terminal.paste(text);
+                }
+                this.terminal.focus();
+            } catch (error) {
+                console.error("Failed to read clipboard:", error);
+                this.$root.toastError("ClipboardReadFailed");
+            }
+        },
+
+        async writeTextToClipboard(text) {
+            if (navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(text);
+                return;
+            }
+
+            const textarea = document.createElement("textarea");
+            textarea.value = text;
+            textarea.setAttribute("readonly", "");
+            textarea.style.position = "fixed";
+            textarea.style.opacity = "0";
+            document.body.appendChild(textarea);
+            textarea.select();
+
+            try {
+                if (!document.execCommand("copy")) {
+                    throw new Error("document.execCommand(copy) returned false");
+                }
+            } finally {
+                document.body.removeChild(textarea);
+            }
         },
 
         /**
@@ -238,6 +381,7 @@ export default {
                 window.addEventListener("resize", this.onResizeEvent);
             }
             this.terminalFitAddOn.fit();
+            this.hasSelection = this.terminal.hasSelection();
         },
         /**
          * Handles the resize event of the terminal component.
@@ -254,7 +398,31 @@ export default {
 
 <style scoped lang="scss">
 .main-terminal {
+    flex: 1;
+    min-height: 0;
+}
+
+.terminal-shell {
+    display: flex;
+    flex-direction: column;
     height: 100%;
+}
+
+.shortcut-hint-row {
+    display: flex;
+    justify-content: flex-end;
+    padding: 10px 12px 0;
+}
+
+.shortcut-hint {
+    line-height: 1.4;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-weight: 600;
+    color: #d7f3ff;
+    background: linear-gradient(135deg, rgba(0, 131, 176, 0.5), rgba(0, 79, 129, 0.7));
+    border: 1px solid rgba(127, 219, 255, 0.45);
+    box-shadow: 0 4px 14px rgba(0, 56, 92, 0.35);
 }
 </style>
 
